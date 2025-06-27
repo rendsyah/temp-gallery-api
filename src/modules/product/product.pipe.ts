@@ -35,6 +35,10 @@ export const CreateProductSchema = z.object({
   sub_category_id: z.number().min(1),
   name: z.string().min(1).max(100),
   sku: z.string().min(1).max(100).toUpperCase(),
+  year: z
+    .string()
+    .length(4, { message: 'Year must be 4 digits' })
+    .regex(/^\d{4}$/, { message: 'Invalid year' }),
   width: z.number().min(1),
   length: z.number().min(1),
   unit: z.enum(['cm']),
