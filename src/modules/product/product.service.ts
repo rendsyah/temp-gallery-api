@@ -57,9 +57,9 @@ export class ProductService {
         'product.category_id AS category_id',
         'product.sub_category_id AS sub_category_id',
         'product.name AS name',
+        'product.year AS year',
         'product_images.id AS image_id',
         'product_images.image AS image',
-        'product.slug AS slug',
         'product.width::INTEGER AS width',
         'product.length::INTEGER AS length',
         'product.unit AS unit',
@@ -81,16 +81,17 @@ export class ProductService {
       category_id: getProduct[0].category_id,
       sub_category_id: getProduct[0].sub_category_id,
       name: getProduct[0].name,
-      images: getProduct.map((product) => ({
-        id: product.image_id,
-        image: product.image,
-      })),
+      year: getProduct[0].year,
       width: getProduct[0].width,
       length: getProduct[0].length,
       unit: getProduct[0].unit,
       price: getProduct[0].price,
       desc: getProduct[0].desc,
       status: getProduct[0].status,
+      images: getProduct.map((product) => ({
+        id: product.image_id,
+        image: product.image,
+      })),
     };
   }
 
@@ -218,6 +219,7 @@ export class ProductService {
         name: formatName,
         slug: formatSlug,
         sku: dto.sku,
+        year: dto.year,
         width: dto.width,
         length: dto.length,
         unit: dto.unit,
@@ -261,7 +263,16 @@ export class ProductService {
     });
 
     if (!getProduct) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException('Product not found');
+    }
+
+    const getProductSKU = await this.ProductRepository.createQueryBuilder('product')
+      .select(['product.id AS id'])
+      .where('LOWER(product.sku) = LOWER(:sku)', { sku: dto.sku })
+      .getRawOne();
+
+    if (getProductSKU) {
+      throw new BadRequestException('SKU already exists');
     }
 
     if (getProduct.name.toLowerCase() !== dto.name.toLowerCase()) {
@@ -290,6 +301,7 @@ export class ProductService {
         name: formatName,
         slug: formatSlug,
         sku: dto.sku,
+        year: dto.year,
         width: dto.width,
         length: dto.length,
         unit: dto.unit,
