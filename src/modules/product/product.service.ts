@@ -4,7 +4,7 @@ import { Brackets, QueryRunner, Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductAwards, ProductImages, Products } from 'src/datasources/entities';
 
 import {
@@ -16,17 +16,7 @@ import {
   UpdateProductDto,
   UpdateProductImageDto,
 } from './product.dto';
-import {
-  CreateProductAwardResponse,
-  CreateProductResponse,
-  DeleteProductAwardResponse,
-  DetailProductResponse,
-  ListProductResponse,
-  ProductAwardResponse,
-  UpdateProductAwardResponse,
-  UpdateProductImageResponse,
-  UpdateProductResponse,
-} from './product.types';
+import { DetailProductResponse, ListProductResponse, ProductAwardResponse } from './product.types';
 
 @Injectable()
 export class ProductService {
@@ -178,7 +168,7 @@ export class ProductService {
    * @param user
    * @returns
    */
-  async createProduct(dto: CreateProductDto, user: IUser): Promise<CreateProductResponse> {
+  async createProduct(dto: CreateProductDto, user: IUser): Promise<MutationResponse> {
     const getProduct = await this.ProductRepository.createQueryBuilder('product')
       .select(['product.id AS id'])
       .where('LOWER(product.name) = LOWER(:name)', { name: dto.name })
@@ -188,12 +178,12 @@ export class ProductService {
       throw new BadRequestException('Name already exists');
     }
 
-    const getProductSKU = await this.ProductRepository.createQueryBuilder('product')
+    const getProductSku = await this.ProductRepository.createQueryBuilder('product')
       .select(['product.id AS id'])
       .where('LOWER(product.sku) = LOWER(:sku)', { sku: dto.sku })
       .getRawOne();
 
-    if (getProductSKU) {
+    if (getProductSku) {
       throw new BadRequestException('SKU already exists');
     }
 
@@ -211,7 +201,7 @@ export class ProductService {
     );
 
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      const product = await queryRunner.manager.insert(Products, {
+      const productResult = await queryRunner.manager.insert(Products, {
         artist_id: dto.artist_id,
         theme_id: dto.theme_id,
         category_id: dto.category_id,
@@ -228,8 +218,8 @@ export class ProductService {
         created_by: user.id,
       });
 
-      const mapImages = formatImages.map((image) => ({
-        product_id: product.generatedMaps[0].id,
+      const insertImages = formatImages.map((image) => ({
+        product_id: +productResult.generatedMaps[0].id,
         image: image,
         created_by: user.id,
       }));
@@ -238,7 +228,7 @@ export class ProductService {
         .createQueryBuilder(ProductImages, 'product_images')
         .insert()
         .into(ProductImages)
-        .values(mapImages)
+        .values(insertImages)
         .execute();
     });
 
@@ -254,7 +244,7 @@ export class ProductService {
    * @param user
    * @returns
    */
-  async updateProduct(dto: UpdateProductDto, user: IUser): Promise<UpdateProductResponse> {
+  async updateProduct(dto: UpdateProductDto, user: IUser): Promise<MutationResponse> {
     const getProduct = await this.ProductRepository.findOne({
       where: {
         id: dto.id,
@@ -266,12 +256,12 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    const getProductSKU = await this.ProductRepository.createQueryBuilder('product')
+    const getProductSku = await this.ProductRepository.createQueryBuilder('product')
       .select(['product.id AS id'])
       .where('LOWER(product.sku) = LOWER(:sku)', { sku: dto.sku })
       .getRawOne();
 
-    if (getProductSKU) {
+    if (getProductSku) {
       throw new BadRequestException('SKU already exists');
     }
 
@@ -324,24 +314,24 @@ export class ProductService {
    * @param user
    * @returns
    */
-  async updateProductImage(
-    dto: UpdateProductImageDto,
-    user: IUser,
-  ): Promise<UpdateProductImageResponse> {
-    for (const image of dto.images) {
-      const getProductImage = await this.ProductImageRepository.findOne({
-        where: {
-          id: image.id,
-        },
-        select: ['id'],
-      });
+  async updateProductImage(dto: UpdateProductImageDto, user: IUser): Promise<MutationResponse> {
+    const updateImages: string[] = [];
+    const insertImages: Partial<ProductImages>[] = [];
 
-      if (!getProductImage) {
-        throw new NotFoundException('Product Image not found');
+    for (const image of dto.images) {
+      if (image.id !== 0) {
+        const getProductImage = await this.ProductImageRepository.findOne({
+          where: {
+            id: image.id,
+          },
+          select: ['id'],
+        });
+
+        if (!getProductImage) {
+          throw new NotFoundException('Product Image not found');
+        }
       }
     }
-
-    const mapImages: string[] = [];
 
     dto.images.map((image) => {
       const formatImage = this.utilsService.validateBase64File(image.image, {
@@ -351,25 +341,43 @@ export class ProductService {
         maxSize: 5,
       });
 
-      mapImages.push(`(${image.id}, '${formatImage}', ${user.id})`);
+      if (image.id !== 0) {
+        updateImages.push(`(${image.id}, '${formatImage}', ${user.id})`);
+      } else {
+        insertImages.push({
+          product_id: dto.product_id,
+          image: formatImage,
+          created_by: user.id,
+        });
+      }
     });
 
-    const valuesImages = mapImages.join(', ');
-
-    const queryImages = `
-        WITH data (id, image, updated_by) AS (
-            VALUES ${valuesImages}
-        )
-        UPDATE product_images pi
-        SET 
-          image = data.image,
-          updated_by = data.updated_by
-        FROM data
-        WHERE pi.id = data.id
-    `;
-
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      await queryRunner.query(queryImages);
+      if (updateImages.length > 0) {
+        const valueImages = updateImages.join(', ');
+        const queryImages = `
+          WITH data (id, image, updated_by) AS (
+            VALUES ${valueImages}
+          )
+          UPDATE product_images pi
+          SET 
+            image = data.image,
+            updated_by = data.updated_by
+          FROM data
+          WHERE pi.id = data.id
+        `;
+
+        await queryRunner.query(queryImages);
+      }
+
+      if (insertImages.length > 0) {
+        await queryRunner.manager
+          .createQueryBuilder(ProductImages, 'product_images')
+          .insert()
+          .into(ProductImages)
+          .values(insertImages)
+          .execute();
+      }
     });
 
     return {
@@ -403,18 +411,11 @@ export class ProductService {
    * @param user
    * @returns
    */
-  async createProductAward(
-    dto: CreateProductAwardDto,
-    user: IUser,
-  ): Promise<CreateProductAwardResponse> {
-    const result = {
-      success: true,
-      message: 'Successfully created',
-      awards: [],
-    };
+  async createProductAward(dto: CreateProductAwardDto, user: IUser): Promise<MutationResponse> {
+    let awards: ProductAwards[] = [];
 
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      const award = dto.awards.map((item) => {
+      const insertAwards = dto.awards.map((item) => {
         const formatTitle = this.utilsService.validateUpperCase(item.title);
         return {
           product_id: dto.product_id,
@@ -429,14 +430,18 @@ export class ProductService {
         .createQueryBuilder(ProductAwards, 'award')
         .insert()
         .into(ProductAwards)
-        .values(award)
+        .values(insertAwards)
         .returning(['id', 'title', 'desc', 'year'])
         .execute();
 
-      result.awards = insertResult.raw;
+      awards = insertResult.raw;
     });
 
-    return result;
+    return {
+      success: true,
+      message: 'Successfully created',
+      data: awards,
+    };
   }
 
   /**
@@ -445,10 +450,7 @@ export class ProductService {
    * @param user
    * @returns
    */
-  async updateProductAward(
-    dto: UpdateProductAwardDto,
-    user: IUser,
-  ): Promise<UpdateProductAwardResponse> {
+  async updateProductAward(dto: UpdateProductAwardDto, user: IUser): Promise<MutationResponse> {
     const getProductAward = await this.ProductAwardRepository.findOne({
       where: {
         id: dto.id,
@@ -485,7 +487,7 @@ export class ProductService {
    * @param dto
    * @returns
    */
-  async deleteProductAward(dto: DetailDto): Promise<DeleteProductAwardResponse> {
+  async deleteProductAward(dto: DetailDto): Promise<MutationResponse> {
     const getProductAward = await this.ProductAwardRepository.findOne({
       where: {
         id: dto.id,
