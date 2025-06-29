@@ -3,16 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductCategory } from 'src/datasources/entities';
 
 import { CreateCategoryDto, DetailDto, ListCategoryDto, UpdateCategoryDto } from './category.dto';
 import {
   CategoryOptionsResponse,
-  CreateCategoryResponse,
   DetailCategoryResponse,
   ListCategoryResponse,
-  UpdateCategoryResponse,
 } from './category.types';
 
 @Injectable()
@@ -137,7 +135,7 @@ export class CategoryService {
    * @param user
    * @returns
    */
-  async createCategory(dto: CreateCategoryDto, user: IUser): Promise<CreateCategoryResponse> {
+  async createCategory(dto: CreateCategoryDto, user: IUser): Promise<MutationResponse> {
     const getCategory = await this.CategoryRepository.createQueryBuilder('category')
       .select(['category.id AS id'])
       .where('LOWER(category.name) = LOWER(:name)', { name: dto.name })
@@ -168,7 +166,7 @@ export class CategoryService {
    * @param user
    * @returns
    */
-  async updateCategory(dto: UpdateCategoryDto, user: IUser): Promise<UpdateCategoryResponse> {
+  async updateCategory(dto: UpdateCategoryDto, user: IUser): Promise<MutationResponse> {
     const getCategory = await this.CategoryRepository.findOne({
       where: {
         id: dto.id,

@@ -2,17 +2,15 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { CategoryService } from './category.service';
 import { CreateCategoryDto, DetailDto, ListCategoryDto, UpdateCategoryDto } from './category.dto';
 import {
   CategoryOptionsResponse,
-  CreateCategoryResponse,
   DetailCategoryResponse,
   ListCategoryResponse,
-  UpdateCategoryResponse,
 } from './category.types';
 
 @ApiTags('Category')
@@ -51,7 +49,7 @@ export class CategoryController {
   async createCategory(
     @Body() dto: CreateCategoryDto,
     @User() user: IUser,
-  ): Promise<CreateCategoryResponse> {
+  ): Promise<MutationResponse> {
     return await this.categoryService.createCategory(dto, user);
   }
 
@@ -61,7 +59,7 @@ export class CategoryController {
   async updateCategory(
     @Body() dto: UpdateCategoryDto,
     @User() user: IUser,
-  ): Promise<UpdateCategoryResponse> {
+  ): Promise<MutationResponse> {
     return await this.categoryService.updateCategory(dto, user);
   }
 }
