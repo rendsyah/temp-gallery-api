@@ -3,17 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductThemes } from 'src/datasources/entities';
 
 import { CreateThemeDto, DetailDto, ListThemeDto, UpdateThemeDto } from './theme.dto';
-import {
-  CreateThemeResponse,
-  DetailThemeResponse,
-  ListThemeResponse,
-  ThemeOptionsResponse,
-  UpdateThemeResponse,
-} from './theme.types';
+import { DetailThemeResponse, ListThemeResponse, ThemeOptionsResponse } from './theme.types';
 
 @Injectable()
 export class ThemeService {
@@ -52,6 +46,10 @@ export class ThemeService {
     };
   }
 
+  /**
+   * Handle get theme options service
+   * @returns
+   */
   async getThemeOptions(): Promise<ThemeOptionsResponse[]> {
     const getTheme = await this.ThemeRepository.createQueryBuilder('theme')
       .select(['theme.id AS id', 'theme.name AS name'])
@@ -133,7 +131,7 @@ export class ThemeService {
    * @param user
    * @returns
    */
-  async createTheme(dto: CreateThemeDto, user: IUser): Promise<CreateThemeResponse> {
+  async createTheme(dto: CreateThemeDto, user: IUser): Promise<MutationResponse> {
     const getTheme = await this.ThemeRepository.createQueryBuilder('theme')
       .select(['theme.id AS id'])
       .where('LOWER(theme.name) = LOWER(:name)', { name: dto.name })
@@ -164,7 +162,7 @@ export class ThemeService {
    * @param user
    * @returns
    */
-  async updateTheme(dto: UpdateThemeDto, user: IUser): Promise<UpdateThemeResponse> {
+  async updateTheme(dto: UpdateThemeDto, user: IUser): Promise<MutationResponse> {
     const getTheme = await this.ThemeRepository.findOne({
       where: {
         id: dto.id,

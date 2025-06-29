@@ -21,13 +21,3 @@ export type ListThemeResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateThemeResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateThemeResponse = {
-  success: boolean;
-  message: string;
-};

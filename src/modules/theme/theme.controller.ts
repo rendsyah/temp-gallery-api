@@ -2,18 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { ThemeService } from './theme.service';
 import { CreateThemeDto, DetailDto, ListThemeDto, UpdateThemeDto } from './theme.dto';
-import {
-  CreateThemeResponse,
-  DetailThemeResponse,
-  ListThemeResponse,
-  ThemeOptionsResponse,
-  UpdateThemeResponse,
-} from './theme.types';
+import { DetailThemeResponse, ListThemeResponse, ThemeOptionsResponse } from './theme.types';
 
 @ApiTags('Theme')
 @UseGuards(JwtAuthGuard)
@@ -48,20 +42,14 @@ export class ThemeController {
   @Post()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create theme' })
-  async createTheme(
-    @Body() dto: CreateThemeDto,
-    @User() user: IUser,
-  ): Promise<CreateThemeResponse> {
+  async createTheme(@Body() dto: CreateThemeDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.themeService.createTheme(dto, user);
   }
 
   @Patch()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update theme' })
-  async updateTheme(
-    @Body() dto: UpdateThemeDto,
-    @User() user: IUser,
-  ): Promise<UpdateThemeResponse> {
+  async updateTheme(@Body() dto: UpdateThemeDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.themeService.updateTheme(dto, user);
   }
 }
