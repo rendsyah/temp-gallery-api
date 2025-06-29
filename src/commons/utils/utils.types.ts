@@ -58,3 +58,9 @@ export type IMenu = {
   level: number;
   child: IMenu[];
 };
+
+export type MutationResponse<T = unknown> = {
+  success: boolean;
+  message: string;
+  data?: T;
+};
