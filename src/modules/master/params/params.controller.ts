@@ -2,17 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { ParamsService } from './params.service';
 import { CreateParamsDto, DetailDto, ListParamsDto, UpdateParamsDto } from './params.dto';
-import {
-  CreateParamsResponse,
-  DetailParamsResponse,
-  ListParamsResponse,
-  UpdateParamsResponse,
-} from './params.types';
+import { DetailParamsResponse, ListParamsResponse } from './params.types';
 
 @ApiTags('Params')
 @UseGuards(JwtAuthGuard)
@@ -40,20 +35,14 @@ export class ParamsController {
   @Post('/params')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create params' })
-  async createParams(
-    @Body() dto: CreateParamsDto,
-    @User() user: IUser,
-  ): Promise<CreateParamsResponse> {
+  async createParams(@Body() dto: CreateParamsDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.paramsService.createParams(dto, user);
   }
 
   @Patch('/params')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update params' })
-  async updateParams(
-    @Body() dto: UpdateParamsDto,
-    @User() user: IUser,
-  ): Promise<UpdateParamsResponse> {
+  async updateParams(@Body() dto: UpdateParamsDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.paramsService.updateParams(dto, user);
   }
 }

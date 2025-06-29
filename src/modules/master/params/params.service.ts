@@ -3,16 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterParams } from 'src/datasources/entities';
 
 import { CreateParamsDto, DetailDto, ListParamsDto, UpdateParamsDto } from './params.dto';
-import {
-  CreateParamsResponse,
-  DetailParamsResponse,
-  ListParamsResponse,
-  UpdateParamsResponse,
-} from './params.types';
+import { DetailParamsResponse, ListParamsResponse } from './params.types';
 
 @Injectable()
 export class ParamsService {
@@ -126,7 +121,7 @@ export class ParamsService {
    * @param user
    * @returns
    */
-  async createParams(dto: CreateParamsDto, user: IUser): Promise<CreateParamsResponse> {
+  async createParams(dto: CreateParamsDto, user: IUser): Promise<MutationResponse> {
     const getParams = await this.ParamsRepository.createQueryBuilder('params')
       .select(['params.id AS id'])
       .where('LOWER(params.name) = LOWER(:name)', { name: dto.name })
@@ -157,7 +152,7 @@ export class ParamsService {
    * @param user
    * @returns
    */
-  async updateParams(dto: UpdateParamsDto, user: IUser): Promise<UpdateParamsResponse> {
+  async updateParams(dto: UpdateParamsDto, user: IUser): Promise<MutationResponse> {
     const getParams = await this.ParamsRepository.findOne({
       where: {
         id: dto.id,

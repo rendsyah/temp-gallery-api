@@ -18,13 +18,3 @@ export type ListParamsResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateParamsResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateParamsResponse = {
-  success: boolean;
-  message: string;
-};
