@@ -110,7 +110,7 @@
     "coveragePathIgnorePatterns": [
       "/src/commons/",
       "/src/datasources/",
-      "/src/seed/",
+      "/src/seeds/",
       "/src/app.module.ts",
       "/src/app.service.ts",
       "/src/app.controller.ts",
