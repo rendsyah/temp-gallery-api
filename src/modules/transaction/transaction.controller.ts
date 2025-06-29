@@ -1,10 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
+import { User } from 'src/commons/decorators';
 
 import { TransactionService } from './transaction.service';
-import { DetailDto, ListTransactionDto } from './transaction.dto';
+import { CreateTransactionDto, DetailDto, ListTransactionDto } from './transaction.dto';
 import { DetailTransactionResponse, ListTransactionResponse } from './transaction.types';
 
 @ApiTags('Transaction')
@@ -28,5 +30,15 @@ export class TransactionController {
   @ApiOperation({ summary: 'Get list transaction' })
   async getListTransaction(@Query() dto: ListTransactionDto): Promise<ListTransactionResponse> {
     return await this.transactionService.getListTransaction(dto);
+  }
+
+  @Post()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create transaction' })
+  async createTransaction(
+    @Body() dto: CreateTransactionDto,
+    @User() user: IUser,
+  ): Promise<MutationResponse> {
+    return await this.transactionService.createTransaction(dto, user);
   }
 }
