@@ -159,13 +159,13 @@ export const seedInit = async (dataSource: DataSource) => {
         ])
         .execute();
 
-      const access = await manager.getRepository(UserAccess).insert({
+      const accessResult = await manager.getRepository(UserAccess).insert({
         name: 'Superuser',
         description: 'Superuser Access',
       });
 
-      const accessDetailMap = menu.generatedMaps.map((item) => ({
-        access_id: +access.generatedMaps[0].id,
+      const insertAccessDetail = menu.generatedMaps.map((item) => ({
+        access_id: +accessResult.generatedMaps[0].id,
         menu_id: +item.id,
         m_created: 1,
         m_updated: 1,
@@ -177,13 +177,13 @@ export const seedInit = async (dataSource: DataSource) => {
         .createQueryBuilder()
         .insert()
         .into(UserAccessDetail)
-        .values(accessDetailMap)
+        .values(insertAccessDetail)
         .execute();
 
       const formatPass = await argon2.hash('12345678');
 
       await manager.getRepository(User).insert({
-        access_id: +access.generatedMaps[0].id,
+        access_id: +accessResult.generatedMaps[0].id,
         username: 'superuser',
         password: formatPass,
         fullname: 'Ferhad Maulidi',
