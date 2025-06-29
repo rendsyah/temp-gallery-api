@@ -11,12 +11,12 @@ import {
   DetailDto,
   ListSubCategoryDto,
   UpdateSubCategoryDto,
-} from './sub_category.dto';
+} from './sub-category.dto';
 import {
   DetailSubCategoryResponse,
   ListSubCategoryResponse,
   SubCategoryOptionsResponse,
-} from './sub_category.types';
+} from './sub-category.types';
 
 @Injectable()
 export class SubCategoryService {

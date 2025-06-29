@@ -26,7 +26,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CategoryModule } from './modules/category/category.module';
 import { MasterModule } from './modules/master/master.module';
 import { ProductModule } from './modules/product/product.module';
-import { SubCategoryModule } from './modules/sub_category/sub_category.module';
+import { SubCategoryModule } from './modules/sub-category/sub-category.module';
 import { ThemeModule } from './modules/theme/theme.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { UserModule } from './modules/user/user.module';

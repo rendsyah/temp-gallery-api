@@ -4,7 +4,7 @@ import {
   UpdateSubCategorySchema,
   ListSubCategorySchema,
   DetailSchema,
-} from './sub_category.pipe';
+} from './sub-category.pipe';
 
 export class DetailDto extends createZodCustomDto(DetailSchema) {}
 

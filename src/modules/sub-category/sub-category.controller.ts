@@ -5,18 +5,18 @@ import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
-import { SubCategoryService } from './sub_category.service';
+import { SubCategoryService } from './sub-category.service';
 import {
   CreateSubCategoryDto,
   DetailDto,
   ListSubCategoryDto,
   UpdateSubCategoryDto,
-} from './sub_category.dto';
+} from './sub-category.dto';
 import {
   DetailSubCategoryResponse,
   ListSubCategoryResponse,
   SubCategoryOptionsResponse,
-} from './sub_category.types';
+} from './sub-category.types';
 
 @ApiTags('Sub Category')
 @UseGuards(JwtAuthGuard)

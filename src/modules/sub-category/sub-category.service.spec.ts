@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { UtilsService } from 'src/commons/utils';
 import { ProductSubCategory } from 'src/datasources/entities';
 
-import { SubCategoryService } from './sub_category.service';
+import { SubCategoryService } from './sub-category.service';
 
 describe('SubCategoryService', () => {
   let service: SubCategoryService;

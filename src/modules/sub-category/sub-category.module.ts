@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ProductSubCategory } from 'src/datasources/entities';
 
-import { SubCategoryController } from './sub_category.controller';
-import { SubCategoryService } from './sub_category.service';
+import { SubCategoryController } from './sub-category.controller';
+import { SubCategoryService } from './sub-category.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ProductSubCategory])],
