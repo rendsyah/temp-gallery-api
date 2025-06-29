@@ -1,6 +1,6 @@
 import { IPaginationResponse, Nullable } from 'src/commons/utils/utils.types';
 
-type TransactionItems = {
+type TransactionItemsResponse = {
   product_id: number;
   quantity: number;
   price: number;
@@ -17,7 +17,7 @@ export type DetailTransactionResponse = Nullable<{
   sub_total: string;
   shipping_fee: string;
   grand_total: string;
-  transaction_items: TransactionItems[];
+  transaction_items: TransactionItemsResponse[];
   transaction_status: number;
   transaction_date: string;
 }>;
@@ -32,8 +32,3 @@ export type ListTransactionResponse = IPaginationResponse<{
   transaction_status_text: string;
   transaction_date: string;
 }>;
-
-export type CreateTransactionResponse = {
-  success: boolean;
-  message: string;
-};
