@@ -14,7 +14,7 @@ export const seedInit = async (dataSource: DataSource) => {
 
   if (accessCount === 0 && userCount === 0) {
     await dataSource.transaction(async (manager) => {
-      const menu = await manager
+      const menuResult = await manager
         .getRepository(MasterMenu)
         .createQueryBuilder()
         .insert()
@@ -164,9 +164,9 @@ export const seedInit = async (dataSource: DataSource) => {
         description: 'Superuser Access',
       });
 
-      const insertAccessDetail = menu.generatedMaps.map((item) => ({
+      const insertAccessDetail = menuResult.generatedMaps.map((menu) => ({
         access_id: +accessResult.generatedMaps[0].id,
-        menu_id: +item.id,
+        menu_id: +menu.id,
         m_created: 1,
         m_updated: 1,
         m_deleted: 1,
