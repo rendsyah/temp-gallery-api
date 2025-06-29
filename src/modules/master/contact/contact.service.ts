@@ -3,16 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterContacts } from 'src/datasources/entities';
 
 import { CreateContactDto, DetailDto, ListContactDto, UpdateContactDto } from './contact.dto';
-import {
-  CreateContactResponse,
-  DetailContactResponse,
-  ListContactResponse,
-  UpdateContactResponse,
-} from './contact.types';
+import { DetailContactResponse, ListContactResponse } from './contact.types';
 
 @Injectable()
 export class ContactService {
@@ -135,7 +130,7 @@ export class ContactService {
    * @param user
    * @returns
    */
-  async createContact(dto: CreateContactDto, user: IUser): Promise<CreateContactResponse> {
+  async createContact(dto: CreateContactDto, user: IUser): Promise<MutationResponse> {
     const formatName = this.utilsService.validateUpperCase(dto.name);
     const formatPhone = this.utilsService.validateReplacePhone(dto.phone, '021');
     const formatWaPhone = this.utilsService.validateReplacePhone(dto.wa_phone, '08');
@@ -163,7 +158,7 @@ export class ContactService {
    * @param user
    * @returns
    */
-  async updateContact(dto: UpdateContactDto, user: IUser): Promise<UpdateContactResponse> {
+  async updateContact(dto: UpdateContactDto, user: IUser): Promise<MutationResponse> {
     const getContact = await this.ContactRepository.findOne({
       where: {
         id: dto.id,

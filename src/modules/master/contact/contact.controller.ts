@@ -2,17 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { ContactService } from './contact.service';
 import { CreateContactDto, DetailDto, ListContactDto, UpdateContactDto } from './contact.dto';
-import {
-  CreateContactResponse,
-  DetailContactResponse,
-  ListContactResponse,
-  UpdateContactResponse,
-} from './contact.types';
+import { DetailContactResponse, ListContactResponse } from './contact.types';
 
 @ApiTags('Contact')
 @UseGuards(JwtAuthGuard)
@@ -43,7 +38,7 @@ export class ContactController {
   async createContact(
     @Body() dto: CreateContactDto,
     @User() user: IUser,
-  ): Promise<CreateContactResponse> {
+  ): Promise<MutationResponse> {
     return await this.contactService.createContact(dto, user);
   }
 
@@ -53,7 +48,7 @@ export class ContactController {
   async updateContact(
     @Body() dto: UpdateContactDto,
     @User() user: IUser,
-  ): Promise<UpdateContactResponse> {
+  ): Promise<MutationResponse> {
     return await this.contactService.updateContact(dto, user);
   }
 }

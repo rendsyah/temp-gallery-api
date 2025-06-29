@@ -23,13 +23,3 @@ export type ListContactResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateContactResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateContactResponse = {
-  success: boolean;
-  message: string;
-};
