@@ -4,7 +4,7 @@ import { QueryRunner, Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User, UserAccess, UserAccessDetail } from 'src/datasources/entities';
 
 import {
@@ -17,12 +17,8 @@ import {
 } from './user.dto';
 import {
   AccessOptionsResponse,
-  CreateAccessResponse,
-  CreateUserResponse,
   DetailUserResponse,
   ListUserResponse,
-  UpdateAccessResponse,
-  UpdateUserResponse,
   UserResponse,
 } from './user.types';
 
@@ -184,7 +180,7 @@ export class UserService {
    * @param user
    * @returns
    */
-  async createUser(dto: CreateUserDto, user: IUser): Promise<CreateUserResponse> {
+  async createUser(dto: CreateUserDto, user: IUser): Promise<MutationResponse> {
     const getUser = await this.UserRepository.createQueryBuilder('user')
       .select(['user.id AS id'])
       .where('LOWER(user.username) = LOWER(:username)', { username: dto.username })
@@ -220,7 +216,7 @@ export class UserService {
    * @param user
    * @returns
    */
-  async updateUser(dto: UpdateUserDto, user: IUser): Promise<UpdateUserResponse> {
+  async updateUser(dto: UpdateUserDto, user: IUser): Promise<MutationResponse> {
     const getUser = await this.UserRepository.findOne({
       where: {
         id: dto.id,
@@ -274,7 +270,7 @@ export class UserService {
    * @param user
    * @returns
    */
-  async createAccess(dto: CreateAccessDto, user: IUser): Promise<CreateAccessResponse> {
+  async createAccess(dto: CreateAccessDto, user: IUser): Promise<MutationResponse> {
     const checkAccess = await this.UserAccessRepository.createQueryBuilder('access')
       .select(['access.id AS id'])
       .where('LOWER(access.name) = LOWER(:name)', { name: dto.name })
@@ -288,15 +284,15 @@ export class UserService {
     const formatDescription = this.utilsService.validateUpperCase(dto.description);
 
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      const access = await queryRunner.manager.insert(UserAccess, {
+      const accessResult = await queryRunner.manager.insert(UserAccess, {
         name: formatName,
         description: formatDescription,
         created_by: user.id,
       });
 
-      const mapDetail = dto.access_detail.map((item) => {
+      const insertAccessDetail = dto.access_detail.map((item) => {
         return {
-          access_id: +access.generatedMaps[0].id,
+          access_id: +accessResult.generatedMaps[0].id,
           menu_id: item.menu_id,
           m_created: item.m_created,
           m_updated: item.m_updated,
@@ -309,7 +305,7 @@ export class UserService {
         .createQueryBuilder(UserAccessDetail, 'access_det')
         .insert()
         .into(UserAccessDetail)
-        .values(mapDetail)
+        .values(insertAccessDetail)
         .execute();
     });
 
@@ -325,7 +321,7 @@ export class UserService {
    * @param user
    * @returns
    */
-  async updateAccess(dto: UpdateAccessDto, user: IUser): Promise<UpdateAccessResponse> {
+  async updateAccess(dto: UpdateAccessDto, user: IUser): Promise<MutationResponse> {
     const getAccess = await this.UserAccessRepository.findOne({
       where: {
         id: dto.id,
@@ -367,7 +363,7 @@ export class UserService {
         access_id: dto.id,
       });
 
-      const mapDetail = dto.access_detail.map((item) => {
+      const insertAccessDetail = dto.access_detail.map((item) => {
         return {
           access_id: dto.id,
           menu_id: item.menu_id,
@@ -383,7 +379,7 @@ export class UserService {
         .createQueryBuilder(UserAccessDetail, 'access_det')
         .insert()
         .into(UserAccessDetail)
-        .values(mapDetail)
+        .values(insertAccessDetail)
         .execute();
     });
 

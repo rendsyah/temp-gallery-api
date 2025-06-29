@@ -32,27 +32,7 @@ export type ListUserResponse = IPaginationResponse<{
   updated_at: string;
 }>;
 
-export type CreateUserResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateUserResponse = {
-  success: boolean;
-  message: string;
-};
-
 export type AccessOptionsResponse = {
   id: number;
   name: string;
-};
-
-export type CreateAccessResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateAccessResponse = {
-  success: boolean;
-  message: string;
 };
