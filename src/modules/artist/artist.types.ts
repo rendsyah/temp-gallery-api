@@ -25,13 +25,3 @@ export type ListArtistResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateArtistResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateArtistResponse = {
-  success: boolean;
-  message: string;
-};

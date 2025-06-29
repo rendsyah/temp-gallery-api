@@ -2,18 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { ArtistService } from './artist.service';
 import { CreateArtistDto, DetailDto, ListArtistDto, UpdateArtistDto } from './artist.dto';
-import {
-  ArtistOptionsResponse,
-  CreateArtistResponse,
-  DetailArtistResponse,
-  ListArtistResponse,
-  UpdateArtistResponse,
-} from './artist.types';
+import { ArtistOptionsResponse, DetailArtistResponse, ListArtistResponse } from './artist.types';
 
 @ApiTags('Artist')
 @UseGuards(JwtAuthGuard)
@@ -48,20 +42,14 @@ export class ArtistController {
   @Post()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create artist' })
-  async createArtist(
-    @Body() dto: CreateArtistDto,
-    @User() user: IUser,
-  ): Promise<CreateArtistResponse> {
+  async createArtist(@Body() dto: CreateArtistDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.artistService.createArtist(dto, user);
   }
 
   @Patch()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update artist' })
-  async updateArtist(
-    @Body() dto: UpdateArtistDto,
-    @User() user: IUser,
-  ): Promise<UpdateArtistResponse> {
+  async updateArtist(@Body() dto: UpdateArtistDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.artistService.updateArtist(dto, user);
   }
 }

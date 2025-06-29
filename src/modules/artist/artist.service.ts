@@ -3,17 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductArtists } from 'src/datasources/entities';
 
 import { CreateArtistDto, DetailDto, ListArtistDto, UpdateArtistDto } from './artist.dto';
-import {
-  ArtistOptionsResponse,
-  CreateArtistResponse,
-  DetailArtistResponse,
-  ListArtistResponse,
-  UpdateArtistResponse,
-} from './artist.types';
+import { ArtistOptionsResponse, DetailArtistResponse, ListArtistResponse } from './artist.types';
 
 @Injectable()
 export class ArtistService {
@@ -150,7 +144,7 @@ export class ArtistService {
    * @param user
    * @returns
    */
-  async createArtist(dto: CreateArtistDto, user: IUser): Promise<CreateArtistResponse> {
+  async createArtist(dto: CreateArtistDto, user: IUser): Promise<MutationResponse> {
     const getArtist = await this.ArtistRepository.createQueryBuilder('artist')
       .select(['artist.id AS id'])
       .where('LOWER(artist.name) = LOWER(:name)', { name: dto.name })
@@ -192,7 +186,7 @@ export class ArtistService {
    * @param user
    * @returns
    */
-  async updateArtist(dto: UpdateArtistDto, user: IUser): Promise<UpdateArtistResponse> {
+  async updateArtist(dto: UpdateArtistDto, user: IUser): Promise<MutationResponse> {
     const getArtist = await this.ArtistRepository.findOne({
       where: {
         id: dto.id,
