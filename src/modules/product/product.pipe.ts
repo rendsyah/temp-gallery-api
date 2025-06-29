@@ -81,10 +81,11 @@ export const UpdateProductAwardSchema = z.object({
 });
 
 export const UpdateProductImageSchema = z.object({
+  product_id: z.number().min(1),
   images: z
     .array(
       z.object({
-        id: z.number().min(1),
+        id: z.number().min(0),
         image: z.string().min(1),
       }),
     )
