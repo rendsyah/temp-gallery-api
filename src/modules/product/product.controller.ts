@@ -12,7 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { ProductService } from './product.service';
@@ -25,17 +25,7 @@ import {
   UpdateProductDto,
   UpdateProductImageDto,
 } from './product.dto';
-import {
-  CreateProductAwardResponse,
-  CreateProductResponse,
-  DeleteProductAwardResponse,
-  DetailProductResponse,
-  ListProductResponse,
-  ProductAwardResponse,
-  UpdateProductAwardResponse,
-  UpdateProductImageResponse,
-  UpdateProductResponse,
-} from './product.types';
+import { DetailProductResponse, ListProductResponse, ProductAwardResponse } from './product.types';
 
 @ApiTags('Product')
 @UseGuards(JwtAuthGuard)
@@ -66,7 +56,7 @@ export class ProductController {
   async createProduct(
     @Body() dto: CreateProductDto,
     @User() user: IUser,
-  ): Promise<CreateProductResponse> {
+  ): Promise<MutationResponse> {
     return await this.productService.createProduct(dto, user);
   }
 
@@ -76,7 +66,7 @@ export class ProductController {
   async updateProduct(
     @Body() dto: UpdateProductDto,
     @User() user: IUser,
-  ): Promise<UpdateProductResponse> {
+  ): Promise<MutationResponse> {
     return await this.productService.updateProduct(dto, user);
   }
 
@@ -86,14 +76,14 @@ export class ProductController {
   async updateProductImage(
     @Body() dto: UpdateProductImageDto,
     @User() user: IUser,
-  ): Promise<UpdateProductImageResponse> {
+  ): Promise<MutationResponse> {
     return await this.productService.updateProductImage(dto, user);
   }
 
-  @Get('/award/:product_id')
+  @Get('/award/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get product award' })
-  async getProductAward(@Query() dto: DetailDto): Promise<ProductAwardResponse[]> {
+  async getProductAward(@Param() dto: DetailDto): Promise<ProductAwardResponse[]> {
     return await this.productService.getProductAward(dto);
   }
 
@@ -103,7 +93,7 @@ export class ProductController {
   async createProductAward(
     @Body() dto: CreateProductAwardDto,
     @User() user: IUser,
-  ): Promise<CreateProductAwardResponse> {
+  ): Promise<MutationResponse> {
     return await this.productService.createProductAward(dto, user);
   }
 
@@ -113,14 +103,14 @@ export class ProductController {
   async updateProductAward(
     @Body() dto: UpdateProductAwardDto,
     @User() user: IUser,
-  ): Promise<UpdateProductAwardResponse> {
+  ): Promise<MutationResponse> {
     return await this.productService.updateProductAward(dto, user);
   }
 
   @Delete('/award/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete product award' })
-  async deleteProductAward(@Param() dto: DetailDto): Promise<DeleteProductAwardResponse> {
+  async deleteProductAward(@Param() dto: DetailDto): Promise<MutationResponse> {
     return await this.productService.deleteProductAward(dto);
   }
 }

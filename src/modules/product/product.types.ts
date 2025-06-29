@@ -1,6 +1,6 @@
 import { IPaginationResponse, Nullable } from 'src/commons/utils/utils.types';
 
-type ProductImages = {
+type ProductImagesResponse = {
   id: number;
   image: string;
 };
@@ -13,7 +13,7 @@ export type DetailProductResponse = Nullable<{
   sub_category_id: number;
   name: string;
   year: string;
-  images: ProductImages[];
+  images: ProductImagesResponse[];
   width: number;
   length: number;
   unit: string;
@@ -34,40 +34,9 @@ export type ListProductResponse = IPaginationResponse<{
   updated_at: string;
 }>;
 
-export type CreateProductResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateProductResponse = {
-  success: boolean;
-  message: string;
-};
-
 export type ProductAwardResponse = {
   id: number;
   title: string;
   desc: string;
   year: string;
-};
-
-export type CreateProductAwardResponse = {
-  success: boolean;
-  message: string;
-  awards: ProductAwardResponse[];
-};
-
-export type UpdateProductAwardResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type DeleteProductAwardResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateProductImageResponse = {
-  success: boolean;
-  message: string;
 };
