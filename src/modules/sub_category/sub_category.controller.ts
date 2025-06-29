@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { SubCategoryService } from './sub_category.service';
@@ -13,11 +13,9 @@ import {
   UpdateSubCategoryDto,
 } from './sub_category.dto';
 import {
-  CreateSubCategoryResponse,
   DetailSubCategoryResponse,
   ListSubCategoryResponse,
   SubCategoryOptionsResponse,
-  UpdateSubCategoryResponse,
 } from './sub_category.types';
 
 @ApiTags('Sub Category')
@@ -56,7 +54,7 @@ export class SubCategoryController {
   async createSubCategory(
     @Body() dto: CreateSubCategoryDto,
     @User() user: IUser,
-  ): Promise<CreateSubCategoryResponse> {
+  ): Promise<MutationResponse> {
     return await this.subCategoryService.createSubCategory(dto, user);
   }
 
@@ -66,7 +64,7 @@ export class SubCategoryController {
   async updateSubCategory(
     @Body() dto: UpdateSubCategoryDto,
     @User() user: IUser,
-  ): Promise<UpdateSubCategoryResponse> {
+  ): Promise<MutationResponse> {
     return await this.subCategoryService.updateSubCategory(dto, user);
   }
 }

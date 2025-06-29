@@ -21,13 +21,3 @@ export type ListSubCategoryResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateSubCategoryResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateSubCategoryResponse = {
-  success: boolean;
-  message: string;
-};

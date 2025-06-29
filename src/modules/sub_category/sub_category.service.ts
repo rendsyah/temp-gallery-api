@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductSubCategory } from 'src/datasources/entities';
 
 import {
@@ -13,11 +13,9 @@ import {
   UpdateSubCategoryDto,
 } from './sub_category.dto';
 import {
-  CreateSubCategoryResponse,
   DetailSubCategoryResponse,
   ListSubCategoryResponse,
   SubCategoryOptionsResponse,
-  UpdateSubCategoryResponse,
 } from './sub_category.types';
 
 @Injectable()
@@ -142,10 +140,7 @@ export class SubCategoryService {
    * @param user
    * @returns
    */
-  async createSubCategory(
-    dto: CreateSubCategoryDto,
-    user: IUser,
-  ): Promise<CreateSubCategoryResponse> {
+  async createSubCategory(dto: CreateSubCategoryDto, user: IUser): Promise<MutationResponse> {
     const getSubCategory = await this.SubCategoryRepository.createQueryBuilder('sub_category')
       .select(['sub_category.id AS id'])
       .where('LOWER(sub_category.name) = LOWER(:name)', { name: dto.name })
@@ -176,10 +171,7 @@ export class SubCategoryService {
    * @param user
    * @returns
    */
-  async updateSubCategory(
-    dto: UpdateSubCategoryDto,
-    user: IUser,
-  ): Promise<UpdateSubCategoryResponse> {
+  async updateSubCategory(dto: UpdateSubCategoryDto, user: IUser): Promise<MutationResponse> {
     const getSubCategory = await this.SubCategoryRepository.findOne({
       where: {
         id: dto.id,
