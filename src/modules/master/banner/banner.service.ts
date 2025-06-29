@@ -3,17 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterBanner } from 'src/datasources/entities';
 
 import { CreateBannerDto, DetailDto, ListBannerDto, UpdateBannerDto } from './banner.dto';
-import {
-  CreateBannerResponse,
-  DetailBannerResponse,
-  GetBannerTypeResponse,
-  ListBannerResponse,
-  UpdateBannerResponse,
-} from './banner.types';
+import { DetailBannerResponse, GetBannerTypeResponse, ListBannerResponse } from './banner.types';
 
 @Injectable()
 export class BannerService {
@@ -151,7 +145,7 @@ export class BannerService {
    * @param user
    * @returns
    */
-  async createBanner(dto: CreateBannerDto, user: IUser): Promise<CreateBannerResponse> {
+  async createBanner(dto: CreateBannerDto, user: IUser): Promise<MutationResponse> {
     const formatTitle = this.utilsService.validateUpperCase(dto.title);
     const formatImage = this.utilsService.validateBase64File(dto.image, {
       dest: '/banner',
@@ -183,7 +177,7 @@ export class BannerService {
    * @param user
    * @returns
    */
-  async updateBanner(dto: UpdateBannerDto, user: IUser): Promise<UpdateBannerResponse> {
+  async updateBanner(dto: UpdateBannerDto, user: IUser): Promise<MutationResponse> {
     const getBanner = await this.BannerRepository.findOne({
       where: {
         id: dto.id,

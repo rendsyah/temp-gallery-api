@@ -2,18 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { BannerService } from './banner.service';
 import { CreateBannerDto, DetailDto, ListBannerDto, UpdateBannerDto } from './banner.dto';
-import {
-  CreateBannerResponse,
-  DetailBannerResponse,
-  GetBannerTypeResponse,
-  ListBannerResponse,
-  UpdateBannerResponse,
-} from './banner.types';
+import { DetailBannerResponse, GetBannerTypeResponse, ListBannerResponse } from './banner.types';
 
 @ApiTags('Banner')
 @UseGuards(JwtAuthGuard)
@@ -48,20 +42,14 @@ export class BannerController {
   @Post('/banner')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create banner' })
-  async createBanner(
-    @Body() dto: CreateBannerDto,
-    @User() user: IUser,
-  ): Promise<CreateBannerResponse> {
+  async createBanner(@Body() dto: CreateBannerDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.bannerService.createBanner(dto, user);
   }
 
   @Patch('/banner')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update banner' })
-  async updateBanner(
-    @Body() dto: UpdateBannerDto,
-    @User() user: IUser,
-  ): Promise<UpdateBannerResponse> {
+  async updateBanner(@Body() dto: UpdateBannerDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.bannerService.updateBanner(dto, user);
   }
 }

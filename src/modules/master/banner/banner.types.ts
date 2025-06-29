@@ -27,13 +27,3 @@ export type ListBannerResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateBannerResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateBannerResponse = {
-  success: boolean;
-  message: string;
-};
