@@ -2,17 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
 
 import { ArticleService } from './article.service';
 import { CreateArticleDto, DetailDto, ListArticleDto, UpdateArticleDto } from './article.dto';
-import {
-  CreateArticleResponse,
-  DetailArticleResponse,
-  ListArticleResponse,
-  UpdateArticleResponse,
-} from './article.types';
+import { DetailArticleResponse, ListArticleResponse } from './article.types';
 
 @ApiTags('Article')
 @UseGuards(JwtAuthGuard)
@@ -43,7 +38,7 @@ export class ArticleController {
   async createArticle(
     @Body() dto: CreateArticleDto,
     @User() user: IUser,
-  ): Promise<CreateArticleResponse> {
+  ): Promise<MutationResponse> {
     return await this.articleService.createArticle(dto, user);
   }
 
@@ -53,7 +48,7 @@ export class ArticleController {
   async updateArticle(
     @Body() dto: UpdateArticleDto,
     @User() user: IUser,
-  ): Promise<UpdateArticleResponse> {
+  ): Promise<MutationResponse> {
     return await this.articleService.updateArticle(dto, user);
   }
 }

@@ -17,13 +17,3 @@ export type ListArticleResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type CreateArticleResponse = {
-  success: boolean;
-  message: string;
-};
-
-export type UpdateArticleResponse = {
-  success: boolean;
-  message: string;
-};

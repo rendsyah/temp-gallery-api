@@ -3,16 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { IUser } from 'src/commons/utils/utils.types';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterArticles } from 'src/datasources/entities';
 
 import { CreateArticleDto, DetailDto, ListArticleDto, UpdateArticleDto } from './article.dto';
-import {
-  CreateArticleResponse,
-  DetailArticleResponse,
-  ListArticleResponse,
-  UpdateArticleResponse,
-} from './article.types';
+import { DetailArticleResponse, ListArticleResponse } from './article.types';
 
 @Injectable()
 export class ArticleService {
@@ -125,7 +120,7 @@ export class ArticleService {
    * @param user
    * @returns
    */
-  async createArticle(dto: CreateArticleDto, user: IUser): Promise<CreateArticleResponse> {
+  async createArticle(dto: CreateArticleDto, user: IUser): Promise<MutationResponse> {
     const getArticle = await this.ArticleRepository.createQueryBuilder('article')
       .select(['article.id AS id'])
       .where('LOWER(article.title) = LOWER(:title)', { title: dto.title })
@@ -163,7 +158,7 @@ export class ArticleService {
    * @param user
    * @returns
    */
-  async updateArticle(dto: UpdateArticleDto, user: IUser): Promise<UpdateArticleResponse> {
+  async updateArticle(dto: UpdateArticleDto, user: IUser): Promise<MutationResponse> {
     const getArticle = await this.ArticleRepository.findOne({
       where: {
         id: dto.id,
