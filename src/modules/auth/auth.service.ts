@@ -308,11 +308,9 @@ export class AuthService {
       );
     }
 
-    const result = {
+    return {
       access_token: getSession.access_token,
       redirect_to: getDirection.path,
     };
-
-    return result;
   }
 }
