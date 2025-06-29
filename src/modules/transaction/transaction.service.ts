@@ -1,17 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, QueryRunner, Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { Transactions } from 'src/datasources/entities';
+import { RunnerService } from 'src/datasources/runner';
+import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
+import { TransactionItems, Transactions } from 'src/datasources/entities';
 
-import { DetailDto, ListTransactionDto } from './transaction.dto';
+import { ProductService } from '../product/product.service';
+
+import { CreateTransactionDto, DetailDto, ListTransactionDto } from './transaction.dto';
 import { DetailTransactionResponse, ListTransactionResponse } from './transaction.types';
 
 @Injectable()
 export class TransactionService {
   constructor(
     private readonly utilsService: UtilsService,
+    private readonly runnerService: RunnerService,
+    private readonly productService: ProductService,
 
     @InjectRepository(Transactions)
     private readonly TransactionRepository: Repository<Transactions>,
@@ -32,23 +38,34 @@ export class TransactionService {
         'transaction.email AS email',
         'transaction.phone AS phone',
         'transaction.message AS message',
-        'transaction.sub_total AS sub_total',
-        'transaction.shipping_fee AS shipping_fee',
-        'transaction.grand_total AS grand_total',
+        'transaction.sub_total::INTEGER AS sub_total',
+        'transaction.shipping_fee::INTEGER AS shipping_fee',
+        'transaction.grand_total::INTEGER AS grand_total',
         'transaction_items.product_id AS product_id',
         'product.name AS product_name',
         `(
-            SELECT pi.image
-            FROM product_images AS pi
-            WHERE pi.product_id = product.id
-            ORDER BY pi.id ASC
-            LIMIT 1
+          SELECT pi.image
+          FROM product_images AS pi
+          WHERE pi.product_id = product.id
+          ORDER BY pi.id ASC
+          LIMIT 1
          ) AS product_image`,
         'transaction_items.quantity AS quantity',
-        'transaction_items.price AS price',
-        'transaction_items.total_price AS total_price',
+        'transaction_items.price::INTEGER AS price',
+        'transaction_items.total_price::INTEGER AS total_price',
         'transaction_items.notes AS notes',
         'transaction.transaction_status AS transaction_status',
+        `CASE
+          WHEN transaction.transaction_status = 0 THEN 'Pending'
+          WHEN transaction.transaction_status = 1 THEN 'Waiting Process'
+          WHEN transaction.transaction_status = 2 THEN 'Process'
+          WHEN transaction.transaction_status = 3 THEN 'Shipped'
+          WHEN transaction.transaction_status = 4 THEN 'Delivered'
+          WHEN transaction.transaction_status = 5 THEN 'Completed'
+          WHEN transaction.transaction_status = 6 THEN 'Cancelled'
+          WHEN transaction.transaction_status = 7 THEN 'Failed'
+          WHEN transaction.transaction_status = 8 THEN 'Refunded'
+         END AS transaction_status_text`,
         'transaction.transaction_date AS transaction_date',
       ])
       .where('transaction.id = :id', { id: dto.id })
@@ -159,5 +176,79 @@ export class TransactionService {
         totalData,
       },
     });
+  }
+
+  /**
+   * Handle create transaction service
+   * @param dto
+   * @param user
+   * @returns
+   */
+  async createTransaction(dto: CreateTransactionDto, user: IUser): Promise<MutationResponse> {
+    await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
+      let subTotal = 0;
+      const shippingFee = 0;
+
+      const transactionItems: Partial<TransactionItems>[] = [];
+
+      for (const item of dto.items) {
+        const getProduct = await this.productService.getDetailProduct({ id: item.product_id });
+
+        if (!getProduct) {
+          throw new BadRequestException('Product not found');
+        }
+
+        const price = getProduct.price;
+        const qty = item.quantity;
+        const totalPrice = qty * price;
+
+        subTotal += totalPrice;
+
+        transactionItems.push({
+          product_id: item.product_id,
+          quantity: qty,
+          price: price,
+          total_price: totalPrice,
+          notes: item.notes,
+        });
+      }
+
+      const grandTotal = subTotal + shippingFee;
+
+      const formatName = this.utilsService.validateUpperCase(dto.name);
+
+      const transactionResult = await queryRunner.manager.insert(Transactions, {
+        name: formatName,
+        email: dto.email,
+        phone: dto.phone,
+        message: dto.message,
+        sub_total: subTotal,
+        shipping_fee: shippingFee,
+        grand_total: grandTotal,
+        created_by: user.id,
+      });
+
+      const insertTransactionItems = transactionItems.map((item) => ({
+        transaction_id: +transactionResult.generatedMaps[0].id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        total_price: item.total_price,
+        notes: item.notes,
+        created_by: user.id,
+      }));
+
+      await queryRunner.manager
+        .createQueryBuilder(TransactionItems, 'transaction_items')
+        .insert()
+        .into(TransactionItems)
+        .values(insertTransactionItems)
+        .execute();
+    });
+
+    return {
+      success: true,
+      message: 'Successfully created',
+    };
   }
 }
