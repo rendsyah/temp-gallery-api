@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
-import { MasterContact } from 'src/datasources/entities';
+import { MasterContacts } from 'src/datasources/entities';
 
 import { ContactService } from './contact.service';
 
@@ -12,7 +12,7 @@ describe('ContactService', () => {
 
   let utilsService: jest.Mocked<UtilsService>;
 
-  let contactRepository: jest.Mocked<Repository<MasterContact>>;
+  let contactRepository: jest.Mocked<Repository<MasterContacts>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,7 +27,7 @@ describe('ContactService', () => {
           },
         },
         {
-          provide: getRepositoryToken(MasterContact),
+          provide: getRepositoryToken(MasterContacts),
           useValue: {
             findOne: jest.fn(),
             createQueryBuilder: jest.fn(),
@@ -40,7 +40,7 @@ describe('ContactService', () => {
 
     utilsService = module.get(UtilsService);
 
-    contactRepository = module.get(getRepositoryToken(MasterContact));
+    contactRepository = module.get(getRepositoryToken(MasterContacts));
   });
 
   afterEach(() => {
