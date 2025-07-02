@@ -162,6 +162,7 @@ export const seedInit = async (dataSource: DataSource) => {
       const accessResult = await manager.getRepository(UserAccess).insert({
         name: 'Superuser',
         description: 'Superuser Access',
+        is_show: 0,
       });
 
       const insertAccessDetail = menuResult.generatedMaps.map((menu) => ({
