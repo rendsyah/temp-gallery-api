@@ -32,6 +32,15 @@ export type ListUserResponse = IPaginationResponse<{
   updated_at: string;
 }>;
 
+export type ListAccessResponse = IPaginationResponse<{
+  id: number;
+  name: string;
+  description: string;
+  status: number;
+  created_at: string;
+  updated_at: string;
+}>;
+
 export type AccessOptionsResponse = {
   id: number;
   name: string;

@@ -3,6 +3,7 @@ import {
   CreateAccessSchema,
   CreateUserSchema,
   DetailSchema,
+  ListAccessSchema,
   ListUserSchema,
   UpdateAccessSchema,
   UpdateUserSchema,
@@ -15,6 +16,8 @@ export class ListUserDto extends createZodCustomDto(ListUserSchema) {}
 export class CreateUserDto extends createZodCustomDto(CreateUserSchema) {}
 
 export class UpdateUserDto extends createZodCustomDto(UpdateUserSchema) {}
+
+export class ListAccessDto extends createZodCustomDto(ListAccessSchema) {}
 
 export class CreateAccessDto extends createZodCustomDto(CreateAccessSchema) {}
 

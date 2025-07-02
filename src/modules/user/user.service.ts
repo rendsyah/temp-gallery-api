@@ -11,6 +11,7 @@ import {
   CreateAccessDto,
   CreateUserDto,
   DetailDto,
+  ListAccessDto,
   ListUserDto,
   UpdateAccessDto,
   UpdateUserDto,
@@ -18,6 +19,7 @@ import {
 import {
   AccessOptionsResponse,
   DetailUserResponse,
+  ListAccessResponse,
   ListUserResponse,
   UserResponse,
 } from './user.types';
@@ -252,6 +254,72 @@ export class UserService {
   }
 
   /**
+   * Handle get list access service
+   * @param dto
+   * @returns
+   */
+  async getListAccess(dto: ListAccessDto): Promise<ListAccessResponse> {
+    const pagination = this.utilsService.pagination(dto);
+    const {
+      page,
+      limit,
+      skip,
+      status,
+      orderBy = 'access.id',
+      sort = 'DESC',
+      search,
+      startDate,
+      endDate,
+    } = pagination;
+
+    const baseQuery = this.UserAccessRepository.createQueryBuilder('access');
+
+    if (search) {
+      baseQuery.andWhere('access.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    if (status !== undefined) {
+      baseQuery.andWhere('access.status = :status', { status: status });
+    }
+
+    if (startDate && endDate) {
+      baseQuery.andWhere('DATE(access.created_at) BETWEEN :start_date AND :end_date', {
+        start_date: startDate,
+        end_date: endDate,
+      });
+    }
+
+    const countQuery = baseQuery.clone();
+
+    baseQuery.select([
+      'access.id AS id',
+      'access.name AS name',
+      'access.description AS description',
+      'access.status AS status',
+      `CASE
+        WHEN access.status = 1 THEN 'Active'
+        ELSE 'Inactive'
+       END AS status_text`,
+      'access.created_at AS created_at',
+      'access.updated_at AS updated_at',
+    ]);
+
+    const [items, totalData] = await Promise.all([
+      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
+      countQuery.getCount(),
+    ]);
+
+    return this.utilsService.paginationResponse({
+      items,
+      meta: {
+        page,
+        limit,
+        totalData,
+      },
+    });
+  }
+
+  /**
    * Handle get access options service
    * @returns
    */
@@ -259,6 +327,7 @@ export class UserService {
     const getAccess = await this.UserAccessRepository.createQueryBuilder('access')
       .select(['access.id AS id', 'access.name AS name'])
       .where('access.status = :status', { status: 1 })
+      .andWhere('access.is_show = :is_show', { is_show: 1 })
       .getRawMany();
 
     return getAccess as AccessOptionsResponse[];

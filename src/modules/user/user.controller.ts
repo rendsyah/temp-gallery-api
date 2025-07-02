@@ -10,6 +10,7 @@ import {
   CreateAccessDto,
   CreateUserDto,
   DetailDto,
+  ListAccessDto,
   ListUserDto,
   UpdateAccessDto,
   UpdateUserDto,
@@ -19,6 +20,7 @@ import {
   UserResponse,
   DetailUserResponse,
   AccessOptionsResponse,
+  ListAccessResponse,
 } from './user.types';
 
 @ApiTags('User')
@@ -70,6 +72,13 @@ export class UserController {
   @ApiOperation({ summary: 'Get access options' })
   async getAccessOptions(): Promise<AccessOptionsResponse[]> {
     return await this.userService.getAccessOptions();
+  }
+
+  @Get('/access/list')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get list access' })
+  async getListAccess(@Query() dto: ListAccessDto): Promise<ListAccessResponse> {
+    return await this.userService.getListAccess(dto);
   }
 
   @Post('/access')
