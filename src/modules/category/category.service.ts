@@ -100,24 +100,25 @@ export class CategoryService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'category.id AS id',
+        'category.name AS name',
+        'category.desc AS desc',
+        'category.status AS status',
+        `CASE
+          WHEN category.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'category.created_at AS created_at',
+        'category.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'category.id AS id',
-      'category.name AS name',
-      'category.desc AS desc',
-      'category.status AS status',
-      `CASE
-        WHEN category.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'category.created_at AS created_at',
-      'category.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

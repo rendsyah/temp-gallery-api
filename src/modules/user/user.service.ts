@@ -145,26 +145,27 @@ export class UserService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'user.id AS id',
+        'user.fullname AS fullname',
+        'access.name AS access_name',
+        'user.email AS email',
+        'user.phone AS phone',
+        'user.status AS status',
+        `CASE
+          WHEN user.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'user.created_at AS created_at',
+        'user.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'user.id AS id',
-      'user.fullname AS fullname',
-      'access.name AS access_name',
-      'user.email AS email',
-      'user.phone AS phone',
-      'user.status AS status',
-      `CASE
-        WHEN user.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'user.created_at AS created_at',
-      'user.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,
@@ -290,24 +291,25 @@ export class UserService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'access.id AS id',
+        'access.name AS name',
+        'access.description AS description',
+        'access.status AS status',
+        `CASE
+          WHEN access.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'access.created_at AS created_at',
+        'access.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'access.id AS id',
-      'access.name AS name',
-      'access.description AS description',
-      'access.status AS status',
-      `CASE
-        WHEN access.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'access.created_at AS created_at',
-      'access.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

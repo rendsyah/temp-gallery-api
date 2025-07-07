@@ -131,26 +131,27 @@ export class ProductService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'product.id AS id',
+        'artist.name AS artist_name',
+        'theme.name AS theme_name',
+        'category.name AS category_name',
+        'product.name AS name',
+        'product.status AS status',
+        `CASE
+          WHEN product.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'product.created_at AS created_at',
+        'product.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'product.id AS id',
-      'artist.name AS artist_name',
-      'theme.name AS theme_name',
-      'category.name AS category_name',
-      'product.name AS name',
-      'product.status AS status',
-      `CASE
-        WHEN product.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'product.created_at AS created_at',
-      'product.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

@@ -93,26 +93,27 @@ export class ContactService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'contact.id AS id',
+        'contact.name AS name',
+        'contact.email AS email',
+        'contact.phone AS phone',
+        'contact.wa_phone AS wa_phone',
+        'contact.status AS status',
+        `CASE
+          WHEN contact.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'contact.created_at AS created_at',
+        'contact.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'contact.id AS id',
-      'contact.name AS name',
-      'contact.email AS email',
-      'contact.phone AS phone',
-      'contact.wa_phone AS wa_phone',
-      'contact.status AS status',
-      `CASE
-        WHEN contact.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'contact.created_at AS created_at',
-      'contact.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

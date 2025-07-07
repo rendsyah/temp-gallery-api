@@ -108,25 +108,26 @@ export class ArtistService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'artist.id AS id',
+        'artist.name AS name',
+        'artist.email AS email',
+        'artist.phone AS phone',
+        'artist.status AS status',
+        `CASE
+          WHEN artist.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'artist.created_at AS created_at',
+        'artist.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'artist.id AS id',
-      'artist.name AS name',
-      'artist.email AS email',
-      'artist.phone AS phone',
-      'artist.status AS status',
-      `CASE
-        WHEN artist.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'artist.created_at AS created_at',
-      'artist.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

@@ -85,24 +85,25 @@ export class ArticleService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'article.id AS id',
+        'article.title AS title',
+        'article.content AS content',
+        'article.status AS status',
+        `CASE
+          WHEN article.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'article.created_at AS created_at',
+        'article.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'article.id AS id',
-      'article.title AS title',
-      'article.content AS content',
-      'article.status AS status',
-      `CASE
-        WHEN article.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'article.created_at AS created_at',
-      'article.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

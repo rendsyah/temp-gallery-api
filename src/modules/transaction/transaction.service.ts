@@ -141,32 +141,33 @@ export class TransactionService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'transaction.id AS id',
+        'transaction.name AS name',
+        'transaction.email AS email',
+        'transaction.phone AS phone',
+        'transaction.grand_total::INTEGER AS grand_total',
+        'transaction.transaction_status AS transaction_status',
+        `CASE
+          WHEN transaction.transaction_status = 0 THEN 'Pending'
+          WHEN transaction.transaction_status = 1 THEN 'Waiting Process'
+          WHEN transaction.transaction_status = 2 THEN 'Process'
+          WHEN transaction.transaction_status = 3 THEN 'Shipped'
+          WHEN transaction.transaction_status = 4 THEN 'Delivered'
+          WHEN transaction.transaction_status = 5 THEN 'Completed'
+          WHEN transaction.transaction_status = 6 THEN 'Cancelled'
+          WHEN transaction.transaction_status = 7 THEN 'Failed'
+          WHEN transaction.transaction_status = 8 THEN 'Refunded'
+         END AS transaction_status_text`,
+        'transaction.transaction_date AS transaction_date',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'transaction.id AS id',
-      'transaction.name AS name',
-      'transaction.email AS email',
-      'transaction.phone AS phone',
-      'transaction.grand_total::INTEGER AS grand_total',
-      'transaction.transaction_status AS transaction_status',
-      `CASE
-        WHEN transaction.transaction_status = 0 THEN 'Pending'
-        WHEN transaction.transaction_status = 1 THEN 'Waiting Process'
-        WHEN transaction.transaction_status = 2 THEN 'Process'
-        WHEN transaction.transaction_status = 3 THEN 'Shipped'
-        WHEN transaction.transaction_status = 4 THEN 'Delivered'
-        WHEN transaction.transaction_status = 5 THEN 'Completed'
-        WHEN transaction.transaction_status = 6 THEN 'Cancelled'
-        WHEN transaction.transaction_status = 7 THEN 'Failed'
-        WHEN transaction.transaction_status = 8 THEN 'Refunded'
-       END AS transaction_status_text`,
-      'transaction.transaction_date AS transaction_date',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

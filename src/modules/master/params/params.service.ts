@@ -85,25 +85,26 @@ export class ParamsService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'params.id AS id',
+        'params.name AS name',
+        'params.desc AS desc',
+        'params.value AS value',
+        'params.status AS status',
+        `CASE
+          WHEN params.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'params.created_at AS created_at',
+        'params.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'params.id AS id',
-      'params.name AS name',
-      'params.desc AS desc',
-      'params.value AS value',
-      'params.status AS status',
-      `CASE
-        WHEN params.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'params.created_at AS created_at',
-      'params.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,

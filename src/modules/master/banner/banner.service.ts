@@ -109,25 +109,26 @@ export class BannerService {
     }
 
     const countQuery = baseQuery.clone();
+    const itemsQuery = baseQuery
+      .select([
+        'banner.id AS id',
+        'banner.title AS title',
+        'banner.sub_title AS sub_title',
+        'banner.type AS type',
+        'banner.status AS status',
+        `CASE
+          WHEN banner.status = 1 THEN 'Active'
+          ELSE 'Inactive'
+         END AS status_text`,
+        'banner.created_at AS created_at',
+        'banner.updated_at AS updated_at',
+      ])
+      .orderBy(orderBy, sort)
+      .limit(limit)
+      .offset(skip)
+      .getRawMany();
 
-    baseQuery.select([
-      'banner.id AS id',
-      'banner.title AS title',
-      'banner.sub_title AS sub_title',
-      'banner.type AS type',
-      'banner.status AS status',
-      `CASE
-        WHEN banner.status = 1 THEN 'Active'
-        ELSE 'Inactive'
-       END AS status_text`,
-      'banner.created_at AS created_at',
-      'banner.updated_at AS updated_at',
-    ]);
-
-    const [items, totalData] = await Promise.all([
-      baseQuery.orderBy(orderBy, sort).limit(limit).offset(skip).getRawMany(),
-      countQuery.getCount(),
-    ]);
+    const [items, totalData] = await Promise.all([itemsQuery, countQuery.getCount()]);
 
     return this.utilsService.paginationResponse({
       items,
