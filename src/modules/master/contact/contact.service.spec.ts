@@ -52,7 +52,8 @@ describe('ContactService', () => {
   });
 
   describe('getDetailContact', () => {
-    console.log(utilsService);
-    console.log(contactRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void contactRepository;
   });
 });

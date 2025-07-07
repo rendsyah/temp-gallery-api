@@ -52,7 +52,8 @@ describe('CategoryService', () => {
   });
 
   describe('getDetailCategory', () => {
-    console.log(utilsService);
-    console.log(categoryRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void categoryRepository;
   });
 });

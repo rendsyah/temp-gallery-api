@@ -52,7 +52,8 @@ describe('BannerService', () => {
   });
 
   describe('getDetailBanner', () => {
-    console.log(utilsService);
-    console.log(bannerRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void bannerRepository;
   });
 });

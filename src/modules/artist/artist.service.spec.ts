@@ -52,7 +52,8 @@ describe('ArtistService', () => {
   });
 
   describe('getDetailArtist', () => {
-    console.log(utilsService);
-    console.log(artistRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void artistRepository;
   });
 });

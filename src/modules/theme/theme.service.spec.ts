@@ -52,7 +52,8 @@ describe('ThemeService', () => {
   });
 
   describe('getDetailTheme', () => {
-    console.log(utilsService);
-    console.log(themeRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void themeRepository;
   });
 });

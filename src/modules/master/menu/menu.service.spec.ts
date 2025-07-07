@@ -38,6 +38,7 @@ describe('MenuService', () => {
   });
 
   describe('getDetailContact', () => {
-    console.log(menuRepository);
+    // TODO: Prepare for unit testing
+    void menuRepository;
   });
 });

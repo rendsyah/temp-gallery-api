@@ -52,7 +52,8 @@ describe('SubCategoryService', () => {
   });
 
   describe('getDetailArtist', () => {
-    console.log(utilsService);
-    console.log(subCategoryRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void subCategoryRepository;
   });
 });

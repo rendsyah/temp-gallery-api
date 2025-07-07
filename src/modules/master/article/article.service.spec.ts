@@ -52,7 +52,8 @@ describe('ArticleService', () => {
   });
 
   describe('getDetailArticle', () => {
-    console.log(utilsService);
-    console.log(articleRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void articleRepository;
   });
 });

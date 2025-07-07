@@ -70,9 +70,10 @@ describe('TransactionService', () => {
   });
 
   describe('getDetailCategory', () => {
-    console.log(utilsService);
-    console.log(runnerService);
-    console.log(productService);
-    console.log(transactionRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void runnerService;
+    void productService;
+    void transactionRepository;
   });
 });

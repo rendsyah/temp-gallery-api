@@ -52,7 +52,8 @@ describe('ParamsService', () => {
   });
 
   describe('getDetailParams', () => {
-    console.log(utilsService);
-    console.log(paramsRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void paramsRepository;
   });
 });

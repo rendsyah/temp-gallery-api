@@ -78,10 +78,11 @@ describe('ProductService', () => {
   });
 
   describe('getDetailCategory', () => {
-    console.log(utilsService);
-    console.log(runnerService);
-    console.log(productRepository);
-    console.log(productImageRepository);
-    console.log(productAwardRepository);
+    // TODO: Prepare for unit testing
+    void utilsService;
+    void runnerService;
+    void productRepository;
+    void productImageRepository;
+    void productAwardRepository;
   });
 });
