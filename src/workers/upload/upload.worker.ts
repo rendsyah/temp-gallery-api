@@ -135,7 +135,7 @@ const fileProcessing = async (data: WorkerProcessing) => {
       stack: err?.stack ?? '',
     };
 
-    logger.warn(`Retrying image processing... attempt ${attempt} of ${maxRetries}`, {
+    logger.warn(`Retrying file processing... attempt ${attempt} of ${maxRetries}`, {
       labels: { service: 'upload-worker-service' },
       req,
       stack,
