@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class TraceMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
-    req.traceId = randomUUID();
+    req['traceId'] = randomUUID();
     next();
   }
 }

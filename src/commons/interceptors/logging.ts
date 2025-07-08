@@ -90,7 +90,7 @@ export class LoggingInterceptor implements NestInterceptor {
           const data = null;
           const errorCode = HttpStatus[statusCode];
           const errors: unknown[] = [];
-          const traceId = request.traceId;
+          const traceId = request['traceId'];
 
           const fallbackResponse = {
             statusCode,
