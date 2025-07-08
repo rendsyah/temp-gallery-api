@@ -7,13 +7,17 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { multerOptions } from 'src/commons/multer';
 
 import { ProductService } from './product.service';
 import {
@@ -52,12 +56,17 @@ export class ProductController {
 
   @Post()
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create product' })
+  @UseInterceptors(
+    FilesInterceptor('images', 5, multerOptions(['image/jpg', 'image/jpeg', 'image/png'], 5)),
+  )
   async createProduct(
     @Body() dto: CreateProductDto,
+    @UploadedFiles() images: Express.Multer.File[],
     @User() user: IUser,
   ): Promise<MutationResponse> {
-    return await this.productService.createProduct(dto, user);
+    return await this.productService.createProduct(dto, images, user);
   }
 
   @Patch()
@@ -72,12 +81,17 @@ export class ProductController {
 
   @Patch('/image')
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update product image' })
+  @UseInterceptors(
+    FilesInterceptor('images', 5, multerOptions(['image/jpg', 'image/jpeg', 'image/png'], 5)),
+  )
   async updateProductImage(
     @Body() dto: UpdateProductImageDto,
+    @UploadedFiles() images: Express.Multer.File[],
     @User() user: IUser,
   ): Promise<MutationResponse> {
-    return await this.productService.updateProductImage(dto, user);
+    return await this.productService.updateProductImage(dto, images, user);
   }
 
   @Get('/award/:id')

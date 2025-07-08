@@ -2,10 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, QueryRunner, Repository } from 'typeorm';
 
+import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductAwards, ProductImages, Products } from 'src/datasources/entities';
+import { UploadWorkerService } from 'src/workers/upload';
 
 import {
   CreateProductAwardDto,
@@ -21,8 +23,10 @@ import { DetailProductResponse, ListProductResponse, ProductAwardResponse } from
 @Injectable()
 export class ProductService {
   constructor(
+    private readonly appLoggerService: AppLoggerService,
     private readonly utilsService: UtilsService,
     private readonly runnerService: RunnerService,
+    private readonly uploadWorkerService: UploadWorkerService,
 
     @InjectRepository(Products)
     private readonly ProductRepository: Repository<Products>,
@@ -166,10 +170,25 @@ export class ProductService {
   /**
    * Handle create product service
    * @param dto
+   * @param images
    * @param user
    * @returns
    */
-  async createProduct(dto: CreateProductDto, user: IUser): Promise<MutationResponse> {
+  async createProduct(
+    dto: CreateProductDto,
+    images: Express.Multer.File[],
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      images: images.map((img) => ({
+        fieldname: img.fieldname,
+        original_name: img.originalname,
+        mimetype: img.mimetype,
+        size: img.size,
+      })),
+    });
+
     const getProduct = await this.ProductRepository.createQueryBuilder('product')
       .select(['product.id AS id'])
       .where('LOWER(product.name) = LOWER(:name)', { name: dto.name })
@@ -191,12 +210,10 @@ export class ProductService {
     const formatName = this.utilsService.validateUpperCase(dto.name);
     const formatSlug = this.utilsService.validateSlug(dto.name);
     const formatImages = await Promise.all(
-      dto.images.map((image) =>
-        this.utilsService.validateBase64File(image, {
+      images.map((img) =>
+        this.utilsService.validateFile(img, {
           dest: '/product',
           type: 'image',
-          mimes: ['image/jpeg', 'image/png'],
-          maxSize: 5,
         }),
       ),
     );
@@ -219,9 +236,9 @@ export class ProductService {
         created_by: user.id,
       });
 
-      const insertImages = formatImages.map((image) => ({
+      const insertImages = formatImages.map((img) => ({
         product_id: +productResult.generatedMaps[0].id,
-        image: image,
+        image: img.fullpath,
         created_by: user.id,
       }));
 
@@ -232,6 +249,21 @@ export class ProductService {
         .values(insertImages)
         .execute();
     });
+
+    void Promise.all(
+      formatImages.map((img, i) =>
+        this.uploadWorkerService.run({
+          task: 'image.processing',
+          data: {
+            context: 'product',
+            buffer: images[i].buffer,
+            original_name: images[i].originalname,
+            filename: img.fullpath,
+            dest: img.filepath,
+          },
+        }),
+      ),
+    );
 
     return {
       success: true,
@@ -312,74 +344,122 @@ export class ProductService {
   /**
    * Handle update product image service
    * @param dto
+   * @param images
    * @param user
    * @returns
    */
-  async updateProductImage(dto: UpdateProductImageDto, user: IUser): Promise<MutationResponse> {
-    const updateImages: string[] = [];
-    const insertImages: Partial<ProductImages>[] = [];
+  async updateProductImage(
+    dto: UpdateProductImageDto,
+    images: Express.Multer.File[],
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      images: images.map((img) => ({
+        fieldname: img.fieldname,
+        original_name: img.originalname,
+        mimetype: img.mimetype,
+        size: img.size,
+      })),
+    });
 
-    for (const image of dto.images) {
-      if (image.id !== 0) {
-        const getProductImage = await this.ProductImageRepository.findOne({
-          where: {
-            id: image.id,
-          },
-          select: ['id'],
-        });
+    const getProduct = await this.ProductRepository.findOne({
+      where: {
+        id: dto.product_id,
+      },
+      select: ['id'],
+    });
 
-        if (!getProductImage) {
-          throw new NotFoundException('Product Image not found');
-        }
+    if (!getProduct) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (dto.image_ids && dto.image_ids.length > 0) {
+      const found = await this.ProductImageRepository.createQueryBuilder('product_images')
+        .select('product_images.id', 'id')
+        .where('product_images.id IN (:...ids)', { ids: dto.image_ids })
+        .getRawMany();
+
+      const foundIds = found.map((img) => img.id as number);
+      const missingIds = dto.image_ids.filter((id) => !foundIds.includes(id));
+
+      if (missingIds.length > 0) {
+        throw new NotFoundException(`Product Images not found: ${missingIds.join(', ')}`);
       }
     }
 
-    dto.images.map((image) => {
-      const formatImage = this.utilsService.validateBase64File(image.image, {
+    const updateValues: string[] = [];
+    const insertValues: Array<{
+      product_id: number;
+      image: string;
+      created_by: number;
+    }> = [];
+    const uploadQueue: Array<{
+      context: string;
+      buffer: Buffer;
+      original_name: string;
+      filename: string;
+      dest: string;
+    }> = [];
+
+    images.forEach((img, idx) => {
+      const meta = this.utilsService.validateFile(img, {
         dest: '/product',
         type: 'image',
-        mimes: ['image/jpeg', 'image/png'],
-        maxSize: 5,
       });
 
-      if (image.id !== 0) {
-        updateImages.push(`(${image.id}, '${formatImage}', ${user.id})`);
+      uploadQueue.push({
+        context: 'product',
+        buffer: img.buffer,
+        original_name: img.originalname,
+        filename: meta.fullpath,
+        dest: meta.filepath,
+      });
+
+      if (dto.image_ids && idx < dto.image_ids.length) {
+        updateValues.push(`(${dto.image_ids[idx]}, '${meta.fullpath}', ${user.id})`);
       } else {
-        insertImages.push({
+        insertValues.push({
           product_id: dto.product_id,
-          image: formatImage,
+          image: meta.fullpath,
           created_by: user.id,
         });
       }
     });
 
-    await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      if (updateImages.length > 0) {
-        const valueImages = updateImages.join(', ');
-        const queryImages = `
+    await this.runnerService.runTransaction(async (queryRunner) => {
+      if (updateValues.length > 0) {
+        const query = `
           WITH data (id, image, updated_by) AS (
-            VALUES ${valueImages}
+            VALUES ${updateValues.join(',')}
           )
           UPDATE product_images pi
-          SET 
-            image = data.image,
-            updated_by = data.updated_by
+          SET image = data.image,
+              updated_by = data.updated_by
           FROM data
           WHERE pi.id = data.id
         `;
-
-        await queryRunner.query(queryImages);
+        await queryRunner.query(query);
       }
 
-      if (insertImages.length > 0) {
+      if (insertValues.length > 0) {
         await queryRunner.manager
           .createQueryBuilder(ProductImages, 'product_images')
           .insert()
           .into(ProductImages)
-          .values(insertImages)
+          .values(insertValues)
           .execute();
       }
     });
+
+    void Promise.all(
+      uploadQueue.map((file) =>
+        this.uploadWorkerService.run({
+          task: 'image.processing',
+          data: file,
+        }),
+      ),
+    );
 
     return {
       success: true,

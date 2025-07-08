@@ -29,22 +29,21 @@ export const ListProductSchema = z.object({
 });
 
 export const CreateProductSchema = z.object({
-  artist_id: z.number().min(1),
-  theme_id: z.number().min(1),
-  category_id: z.number().min(1),
-  sub_category_id: z.number().min(1),
+  artist_id: z.preprocess((value) => Number(value), z.number().min(1)),
+  theme_id: z.preprocess((value) => Number(value), z.number().min(1)),
+  category_id: z.preprocess((value) => Number(value), z.number().min(1)),
+  sub_category_id: z.preprocess((value) => Number(value), z.number().min(1)),
   name: z.string().min(1).max(100),
   sku: z.string().min(1).max(100).toUpperCase(),
   year: z
     .string()
     .length(4, { message: 'Year must be 4 digits' })
     .regex(/^\d{4}$/, { message: 'Invalid year' }),
-  width: z.number().min(1),
-  length: z.number().min(1),
+  width: z.preprocess((value) => Number(value), z.number().min(1)),
+  length: z.preprocess((value) => Number(value), z.number().min(1)),
   unit: z.enum(['cm']),
-  price: z.number().min(0),
+  price: z.preprocess((value) => Number(value), z.number().min(0)),
   desc: z.string().min(1),
-  images: z.array(z.string().min(1)).min(1),
 });
 
 export const UpdateProductSchema = z
@@ -52,7 +51,27 @@ export const UpdateProductSchema = z
     id: z.number().min(1),
     status: z.number().min(0).max(1),
   })
-  .merge(CreateProductSchema.omit({ images: true }));
+  .merge(CreateProductSchema);
+
+export const UpdateProductImageSchema = z.object({
+  product_id: z.preprocess((value) => Number(value), z.number().min(1)),
+  image_ids: z
+    .preprocess(
+      (value) => {
+        if (typeof value === 'string') {
+          try {
+            return JSON.parse(value);
+          } catch {
+            return [];
+          }
+        }
+        return value;
+      },
+      z.array(z.number().min(1)),
+    )
+    .optional()
+    .describe('Array of image IDs. Send as JSON string in multipart: "[1,2,3]"'),
+});
 
 export const CreateProductAwardSchema = z.object({
   product_id: z.number().min(1),
@@ -78,16 +97,4 @@ export const UpdateProductAwardSchema = z.object({
     .string()
     .length(4, { message: 'Year must be 4 digits' })
     .regex(/^\d{4}$/, { message: 'Invalid year' }),
-});
-
-export const UpdateProductImageSchema = z.object({
-  product_id: z.number().min(1),
-  images: z
-    .array(
-      z.object({
-        id: z.number().min(0),
-        image: z.string().min(1),
-      }),
-    )
-    .min(1),
 });
