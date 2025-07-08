@@ -28,14 +28,17 @@ export const ListArticleSchema = z.object({
 
 export const CreateArticleSchema = z.object({
   title: z.string().min(1).max(100),
-  image: z.string().min(1),
   content: z.string().min(1),
 });
 
 export const UpdateArticleSchema = z
   .object({
-    id: z.number().min(1),
-    status: z.number().min(0).max(1),
-    is_update_image: z.boolean(),
+    id: z.preprocess((value) => Number(value), z.number().min(1)),
+    status: z.preprocess((value) => Number(value), z.number().min(0).max(1)),
+    is_update_image: z.preprocess((value) => {
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      return value;
+    }, z.boolean()),
   })
   .merge(CreateArticleSchema);

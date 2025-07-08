@@ -2,9 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterArticles } from 'src/datasources/entities';
+import { UploadWorkerService } from 'src/workers/upload';
 
 import { CreateArticleDto, DetailDto, ListArticleDto, UpdateArticleDto } from './article.dto';
 import { DetailArticleResponse, ListArticleResponse } from './article.types';
@@ -12,7 +14,9 @@ import { DetailArticleResponse, ListArticleResponse } from './article.types';
 @Injectable()
 export class ArticleService {
   constructor(
+    private readonly appLoggerService: AppLoggerService,
     private readonly utilsService: UtilsService,
+    private readonly uploadWorkerService: UploadWorkerService,
 
     @InjectRepository(MasterArticles)
     private readonly ArticleRepository: Repository<MasterArticles>,
@@ -118,10 +122,25 @@ export class ArticleService {
   /**
    * Handle create article service
    * @param dto
+   * @param image
    * @param user
    * @returns
    */
-  async createArticle(dto: CreateArticleDto, user: IUser): Promise<MutationResponse> {
+  async createArticle(
+    dto: CreateArticleDto,
+    image: Express.Multer.File,
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      image: {
+        fieldname: image.fieldname,
+        original_name: image.originalname,
+        mimetype: image.mimetype,
+        size: image.size,
+      },
+    });
+
     const getArticle = await this.ArticleRepository.createQueryBuilder('article')
       .select(['article.id AS id'])
       .where('LOWER(article.title) = LOWER(:title)', { title: dto.title })
@@ -132,19 +151,28 @@ export class ArticleService {
     }
 
     const formatSlug = this.utilsService.validateSlug(dto.title);
-    const formatImage = this.utilsService.validateBase64File(dto.image, {
+    const formatImage = this.utilsService.validateFile(image, {
       dest: '/article',
       type: 'image',
-      mimes: ['image/jpeg', 'image/png'],
-      maxSize: 5,
     });
 
     await this.ArticleRepository.insert({
       title: dto.title,
       slug: formatSlug,
-      image: formatImage,
+      image: formatImage.fullpath,
       content: dto.content,
       created_by: user.id,
+    });
+
+    void this.uploadWorkerService.run({
+      task: 'image.processing',
+      data: {
+        context: 'article',
+        buffer: image.buffer,
+        original_name: image.originalname,
+        filename: formatImage.fullpath,
+        dest: formatImage.filepath,
+      },
     });
 
     return {
@@ -156,15 +184,32 @@ export class ArticleService {
   /**
    * Handle update article service
    * @param dto
+   * @param image
    * @param user
    * @returns
    */
-  async updateArticle(dto: UpdateArticleDto, user: IUser): Promise<MutationResponse> {
+  async updateArticle(
+    dto: UpdateArticleDto,
+    image: Express.Multer.File,
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      image: dto.is_update_image
+        ? {
+            fieldname: image.fieldname,
+            original_name: image.originalname,
+            mimetype: image.mimetype,
+            size: image.size,
+          }
+        : null,
+    });
+
     const getArticle = await this.ArticleRepository.findOne({
       where: {
         id: dto.id,
       },
-      select: ['id', 'title'],
+      select: ['id', 'title', 'image'],
     });
 
     if (!getArticle) {
@@ -182,15 +227,23 @@ export class ArticleService {
       }
     }
 
+    let filepath = '';
+    let fullpath = '';
+
+    if (dto.is_update_image) {
+      if (!image) throw new BadRequestException('Image is required');
+
+      const file = this.utilsService.validateFile(image, {
+        dest: '/article',
+        type: 'image',
+      });
+
+      filepath = file.filepath;
+      fullpath = file.fullpath;
+    }
+
     const formatSlug = this.utilsService.validateSlug(dto.title);
-    const formatImage = dto.is_update_image
-      ? this.utilsService.validateBase64File(dto.image, {
-          dest: '/article',
-          type: 'image',
-          mimes: ['image/jpeg', 'image/png'],
-          maxSize: 5,
-        })
-      : dto.image;
+    const formatImage = dto.is_update_image ? fullpath : getArticle.image;
 
     await this.ArticleRepository.update(
       {
@@ -205,6 +258,19 @@ export class ArticleService {
         updated_by: user.id,
       },
     );
+
+    if (dto.is_update_image) {
+      void this.uploadWorkerService.run({
+        task: 'image.processing',
+        data: {
+          context: 'article',
+          buffer: image.buffer,
+          original_name: image.originalname,
+          filename: fullpath,
+          dest: filepath,
+        },
+      });
+    }
 
     return {
       success: true,
