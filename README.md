@@ -196,7 +196,7 @@ make deploy
 Swagger documentation is available at:
 
 ```
-http://localhost:8080/api/docs
+http://localhost:8080/api/docs/gallery-165pt
 ```
 
 You can use this UI to explore and test API endpoints.
