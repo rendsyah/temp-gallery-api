@@ -29,17 +29,20 @@ export const ListBannerSchema = z.object({
 export const CreateBannerSchema = z.object({
   title: z.string().min(1).max(100),
   sub_title: z.string().min(1).max(150),
-  image: z.string().min(1),
   type: z.enum(['home', 'artists', 'artworks', 'exhibitions', 'contact', 'articles', 'others']),
   placement_text_x: z.enum(['left', 'center', 'right']),
   placement_text_y: z.enum(['top', 'center', 'bottom']),
-  sort: z.number().min(1),
+  sort: z.preprocess((value) => Number(value), z.number().min(1)),
 });
 
 export const UpdateBannerSchema = z
   .object({
-    id: z.number().min(1),
-    status: z.number().min(0).max(1),
-    is_update_image: z.boolean(),
+    id: z.preprocess((value) => Number(value), z.number().min(1)),
+    status: z.preprocess((value) => Number(value), z.number().min(0).max(1)),
+    is_update_image: z.preprocess((value) => {
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      return value;
+    }, z.boolean()),
   })
   .merge(CreateBannerSchema);

@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { multerOptions } from 'src/commons/multer';
 
 import { BannerService } from './banner.service';
 import { CreateBannerDto, DetailDto, ListBannerDto, UpdateBannerDto } from './banner.dto';
@@ -41,15 +54,31 @@ export class BannerController {
 
   @Post('/banner')
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create banner' })
-  async createBanner(@Body() dto: CreateBannerDto, @User() user: IUser): Promise<MutationResponse> {
-    return await this.bannerService.createBanner(dto, user);
+  @UseInterceptors(
+    FileInterceptor('image', multerOptions(['image/jpg', 'image/jpeg', 'image/png'], 5)),
+  )
+  async createBanner(
+    @Body() dto: CreateBannerDto,
+    @UploadedFile() image: Express.Multer.File,
+    @User() user: IUser,
+  ): Promise<MutationResponse> {
+    return await this.bannerService.createBanner(dto, image, user);
   }
 
   @Patch('/banner')
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update banner' })
-  async updateBanner(@Body() dto: UpdateBannerDto, @User() user: IUser): Promise<MutationResponse> {
-    return await this.bannerService.updateBanner(dto, user);
+  @UseInterceptors(
+    FileInterceptor('image', multerOptions(['image/jpg', 'image/jpeg', 'image/png'], 5)),
+  )
+  async updateBanner(
+    @Body() dto: UpdateBannerDto,
+    @UploadedFile() image: Express.Multer.File,
+    @User() user: IUser,
+  ): Promise<MutationResponse> {
+    return await this.bannerService.updateBanner(dto, image, user);
   }
 }

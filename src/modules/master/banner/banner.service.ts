@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterBanner } from 'src/datasources/entities';
+import { UploadWorkerService } from 'src/workers/upload';
 
 import { CreateBannerDto, DetailDto, ListBannerDto, UpdateBannerDto } from './banner.dto';
 import { DetailBannerResponse, GetBannerTypeResponse, ListBannerResponse } from './banner.types';
@@ -12,7 +14,9 @@ import { DetailBannerResponse, GetBannerTypeResponse, ListBannerResponse } from 
 @Injectable()
 export class BannerService {
   constructor(
+    private readonly appLoggerService: AppLoggerService,
     private readonly utilsService: UtilsService,
+    private readonly uploadWorkerService: UploadWorkerService,
 
     @InjectRepository(MasterBanner)
     private readonly BannerRepository: Repository<MasterBanner>,
@@ -143,27 +147,51 @@ export class BannerService {
   /**
    * Handle create banner service
    * @param dto
+   * @param image
    * @param user
    * @returns
    */
-  async createBanner(dto: CreateBannerDto, user: IUser): Promise<MutationResponse> {
+  async createBanner(
+    dto: CreateBannerDto,
+    image: Express.Multer.File,
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      image: {
+        fieldname: image.fieldname,
+        original_name: image.originalname,
+        mimetype: image.mimetype,
+        size: image.size,
+      },
+    });
+
     const formatTitle = this.utilsService.validateUpperCase(dto.title);
-    const formatImage = this.utilsService.validateBase64File(dto.image, {
+    const formatImage = this.utilsService.validateFile(image, {
       dest: '/banner',
       type: 'image',
-      mimes: ['image/jpeg', 'image/png'],
-      maxSize: 5,
     });
 
     await this.BannerRepository.insert({
       title: formatTitle,
       sub_title: dto.sub_title,
-      image: formatImage,
+      image: formatImage.fullpath,
       type: dto.type,
       placement_text_x: dto.placement_text_x,
       placement_text_y: dto.placement_text_y,
       sort: dto.sort,
       created_by: user.id,
+    });
+
+    void this.uploadWorkerService.run({
+      task: 'image.processing',
+      data: {
+        context: 'banner',
+        buffer: image.buffer,
+        original_name: image.originalname,
+        filename: formatImage.fullpath,
+        dest: formatImage.filepath,
+      },
     });
 
     return {
@@ -175,30 +203,55 @@ export class BannerService {
   /**
    * Handle update banner service
    * @param dto
+   * @param image
    * @param user
    * @returns
    */
-  async updateBanner(dto: UpdateBannerDto, user: IUser): Promise<MutationResponse> {
+  async updateBanner(
+    dto: UpdateBannerDto,
+    image: Express.Multer.File,
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      image: dto.is_update_image
+        ? {
+            fieldname: image.fieldname,
+            original_name: image.originalname,
+            mimetype: image.mimetype,
+            size: image.size,
+          }
+        : null,
+    });
+
     const getBanner = await this.BannerRepository.findOne({
       where: {
         id: dto.id,
       },
-      select: ['id'],
+      select: ['id', 'image'],
     });
 
     if (!getBanner) {
       throw new NotFoundException('Banner not found');
     }
 
+    let filepath = '';
+    let fullpath = '';
+
+    if (dto.is_update_image) {
+      if (!image) throw new BadRequestException('Image is required');
+
+      const file = this.utilsService.validateFile(image, {
+        dest: '/banner',
+        type: 'image',
+      });
+
+      filepath = file.filepath;
+      fullpath = file.fullpath;
+    }
+
     const formatTitle = this.utilsService.validateUpperCase(dto.title);
-    const formatImage = dto.is_update_image
-      ? this.utilsService.validateBase64File(dto.image, {
-          dest: '/banner',
-          type: 'image',
-          mimes: ['image/jpeg', 'image/png'],
-          maxSize: 5,
-        })
-      : dto.image;
+    const formatImage = dto.is_update_image ? fullpath : getBanner.image;
 
     await this.BannerRepository.update(
       {
@@ -216,6 +269,19 @@ export class BannerService {
         updated_by: user.id,
       },
     );
+
+    if (dto.is_update_image) {
+      void this.uploadWorkerService.run({
+        task: 'image.processing',
+        data: {
+          context: 'banner',
+          buffer: image.buffer,
+          original_name: image.originalname,
+          filename: fullpath,
+          dest: filepath,
+        },
+      });
+    }
 
     return {
       success: true,
