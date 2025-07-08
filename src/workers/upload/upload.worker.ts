@@ -142,7 +142,7 @@ const fileProcessing = async (data: WorkerProcessing) => {
     });
 
     if (retries > 0) {
-      await sleep(1000);
+      await sleep(backoffMs);
       await fileProcessing({
         context,
         buffer,
