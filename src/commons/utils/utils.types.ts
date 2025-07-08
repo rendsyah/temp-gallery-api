@@ -15,6 +15,11 @@ export type IFile = {
   maxSize?: number;
 };
 
+export type IFileResponse = {
+  filepath: string;
+  fullpath: string;
+};
+
 export type IPagination = {
   page: number;
   limit: number;

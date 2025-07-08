@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import dayjs from 'dayjs';
 import argon2 from '@node-rs/argon2';
-import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
@@ -10,6 +9,7 @@ import { AppConfigService } from '../config';
 
 import {
   IFile,
+  IFileResponse,
   IPagination,
   IPaginationResponse,
   IValidateRandomChar,
@@ -199,32 +199,6 @@ export class UtilsService {
     return await argon2.verify(hash, request);
   }
 
-  public async validateProcessImage(request: Buffer, dest: string, retries: number): Promise<void> {
-    try {
-      await sharp(request)
-        .resize(800, null, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .webp({ quality: 80 })
-        .toFile(dest);
-    } catch {
-      if (retries > 0) {
-        await this.validateProcessImage(request, dest, retries - 1);
-      }
-    }
-  }
-
-  public async validateProcessFile(request: Buffer, dest: string, retries: number): Promise<void> {
-    try {
-      await fs.promises.writeFile(dest, request);
-    } catch {
-      if (retries > 0) {
-        await this.validateProcessFile(request, dest, retries - 1);
-      }
-    }
-  }
-
   public validateExtension(mime: string): string {
     const ext: Record<string, string> = {
       'application/pdf': 'pdf',
@@ -238,7 +212,7 @@ export class UtilsService {
     return ext[mime] ?? 'bin';
   }
 
-  public validateFile(request: Express.Multer.File, config: IFile): string {
+  public validateFile(request: Express.Multer.File, config: IFile): IFileResponse {
     const { type, dest } = config;
 
     const destpath = path.join(process.cwd(), '..', 'public', dest);
@@ -248,28 +222,24 @@ export class UtilsService {
     }
 
     const extension = type === 'image' ? 'webp' : this.validateExtension(request.mimetype);
-    const filename = `${new Date().getTime()}_${this.validateRandomChar(8, 'alphanumeric')}.${extension}`;
+    const filename = `${Date.now()}_${this.validateRandomChar(8, 'alphanumeric')}.${extension}`;
     const filepath = path.join(destpath, filename);
+    const fullpath = path.posix.join('/media', dest, filename);
 
-    setImmediate(() => {
-      if (type === 'image') {
-        void this.validateProcessImage(request.buffer, filepath, 3);
-      } else {
-        void this.validateProcessFile(request.buffer, filepath, 3);
-      }
-    });
-
-    return '/media' + `${dest}/${filename}`;
+    return {
+      filepath,
+      fullpath,
+    };
   }
 
-  public validateBase64File(request: string, config: IFile): string {
+  public validateBase64File(request: string, config: IFile): IFileResponse {
     const { type, dest, mimes = [], maxSize = 5 } = config;
 
     const base64File = request.match(/^data:(.+);base64,(.+)$/) || [];
     const isValidFile = base64File.length === 3;
 
     if (!isValidFile) {
-      throw new BadRequestException(config.type === 'image' ? 'Invalid image' : 'Invalid file');
+      throw new BadRequestException('Invalid file');
     }
 
     const [, mime, data] = base64File;
@@ -283,25 +253,20 @@ export class UtilsService {
       throw new BadRequestException(`File too large, max ${maxSize}MB`);
     }
 
-    const buffer = Buffer.from(data, 'base64');
     const destpath = path.join(process.cwd(), '..', 'public', dest);
     const extension = type === 'image' ? 'webp' : this.validateExtension(mime);
     const filename = `${Date.now()}_${this.validateRandomChar(8, 'alphanumeric')}.${extension}`;
     const filepath = path.join(destpath, filename);
+    const fullpath = path.posix.join('/media', dest, filename);
 
     if (!fs.existsSync(destpath)) {
       fs.mkdirSync(destpath, { recursive: true });
     }
 
-    setImmediate(() => {
-      if (type === 'image') {
-        void this.validateProcessImage(buffer, filepath, 3);
-      } else {
-        void this.validateProcessFile(buffer, filepath, 3);
-      }
-    });
-
-    return '/media' + `${dest}/${filename}`;
+    return {
+      filepath,
+      fullpath,
+    };
   }
 
   public validateMasked(request: string, start: number, end: number): string {
