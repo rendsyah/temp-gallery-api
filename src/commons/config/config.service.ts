@@ -7,6 +7,7 @@ export type AppConfigTypes = {
   API_DOCS: number;
   API_SEED: number;
   API_PORT: number;
+  WORKER_THREADS: number;
   DB_TYPE: string;
   DB_HOST: string;
   DB_PORT: number;
@@ -44,6 +45,10 @@ export class AppConfigService {
 
   get API_PORT(): number {
     return Number(this.configService.getOrThrow('API_PORT', { infer: true }));
+  }
+
+  get WORKER_THREADS(): number {
+    return Number(this.configService.getOrThrow('WORKER_THREADS', { infer: true }));
   }
 
   get DB_TYPE(): string {
