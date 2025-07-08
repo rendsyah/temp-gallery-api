@@ -16,6 +16,17 @@ import { AppLoggerService, LoggerContext } from '../logger';
 export class LoggingInterceptor implements NestInterceptor {
   constructor(private readonly appLoggerService: AppLoggerService) {}
 
+  serializeError(error: unknown) {
+    if (error instanceof Error) {
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      };
+    }
+    return error;
+  }
+
   hideSensitive(data: Record<string, unknown>) {
     if (!data) return {};
     const sensitiveFields = new Set(['password', 'otp']);
@@ -58,7 +69,6 @@ export class LoggingInterceptor implements NestInterceptor {
       res: {} as unknown,
       meta: {} as unknown,
       stack: {} as unknown,
-      stackError: {} as unknown,
       responseTime: 0,
     };
 
@@ -68,7 +78,6 @@ export class LoggingInterceptor implements NestInterceptor {
           const responseTime = Date.now() - startTime;
 
           delete intercept.stack;
-          delete intercept.stackError;
 
           intercept.res = data;
           intercept.responseTime = responseTime;
@@ -109,14 +118,12 @@ export class LoggingInterceptor implements NestInterceptor {
             }
           }
 
-          const stack = error instanceof Error ? (error.stack ?? '') : '';
-          const stackError = error;
+          const stack = this.serializeError(error);
 
           const responseTime = Date.now() - startTime;
 
           intercept.res = fallbackResponse;
           intercept.stack = stack;
-          intercept.stackError = stackError;
           intercept.responseTime = responseTime;
 
           if (fallbackResponse.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
