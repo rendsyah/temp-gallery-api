@@ -10,29 +10,33 @@ const {
   LOG_LEVEL = 'info',
 } = process.env;
 
-const transports = {
-  test: [],
-  development: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        winston.format.prettyPrint(),
-      ),
-    }),
-  ],
-  production: [
-    new LokiTransport({
-      host: LOKI_URL as string,
-      basicAuth: `${LOKI_USER}:${LOKI_PASS}`,
-      labels: { service: API_NAME },
-      json: true,
-      format: winston.format.json(),
-      onConnectionError: (err) => console.error('Loki Error:', err),
-    }),
-  ],
+const getTransports = (ENV: string) => {
+  const transports: Record<string, () => winston.transport[]> = {
+    test: () => [],
+    development: () => [
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+          winston.format.prettyPrint(),
+        ),
+      }),
+    ],
+    production: () => [
+      new LokiTransport({
+        host: LOKI_URL as string,
+        basicAuth: `${LOKI_USER}:${LOKI_PASS}`,
+        labels: { service: API_NAME },
+        json: true,
+        format: winston.format.json(),
+        onConnectionError: (err) => console.error('Loki Error:', err),
+      }),
+    ],
+  };
+
+  return transports[ENV]();
 };
 
 export const logger = winston.createLogger({
   level: LOG_LEVEL,
-  transports: transports[NODE_ENV],
+  transports: getTransports(NODE_ENV),
 });
