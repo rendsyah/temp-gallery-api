@@ -34,14 +34,17 @@ export const CreateArtistSchema = z.object({
     .min(1)
     .max(25)
     .regex(/^(62|08|021)[0-9]{7,20}$/, 'Invalid phone number'),
-  image: z.string().min(1),
   desc: z.string().min(1),
 });
 
 export const UpdateArtistSchema = z
   .object({
-    id: z.number().min(1),
-    status: z.number().min(0).max(1),
-    is_update_image: z.boolean(),
+    id: z.preprocess((value) => Number(value), z.number().min(1)),
+    status: z.preprocess((value) => Number(value), z.number().min(0).max(1)),
+    is_update_image: z.preprocess((value) => {
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      return value;
+    }, z.boolean()),
   })
   .merge(CreateArtistSchema);

@@ -2,9 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 
+import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductArtists } from 'src/datasources/entities';
+import { UploadWorkerService } from 'src/workers/upload';
 
 import { CreateArtistDto, DetailDto, ListArtistDto, UpdateArtistDto } from './artist.dto';
 import { ArtistOptionsResponse, DetailArtistResponse, ListArtistResponse } from './artist.types';
@@ -12,7 +14,9 @@ import { ArtistOptionsResponse, DetailArtistResponse, ListArtistResponse } from 
 @Injectable()
 export class ArtistService {
   constructor(
+    private readonly appLoggerService: AppLoggerService,
     private readonly utilsService: UtilsService,
+    private readonly uploadWorkerService: UploadWorkerService,
 
     @InjectRepository(ProductArtists)
     private readonly ArtistRepository: Repository<ProductArtists>,
@@ -142,10 +146,25 @@ export class ArtistService {
   /**
    * Handle create artist service
    * @param dto
+   * @param image
    * @param user
    * @returns
    */
-  async createArtist(dto: CreateArtistDto, user: IUser): Promise<MutationResponse> {
+  async createArtist(
+    dto: CreateArtistDto,
+    image: Express.Multer.File,
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      image: {
+        fieldname: image.fieldname,
+        original_name: image.originalname,
+        mimetype: image.mimetype,
+        size: image.size,
+      },
+    });
+
     const getArtist = await this.ArtistRepository.createQueryBuilder('artist')
       .select(['artist.id AS id'])
       .where('LOWER(artist.name) = LOWER(:name)', { name: dto.name })
@@ -158,11 +177,9 @@ export class ArtistService {
     const formatName = this.utilsService.validateUpperCase(dto.name);
     const formatSlug = this.utilsService.validateSlug(dto.name);
     const formatPhone = this.utilsService.validateReplacePhone(dto.phone, '08');
-    const formatImage = this.utilsService.validateBase64File(dto.image, {
+    const formatImage = this.utilsService.validateFile(image, {
       dest: '/artist',
       type: 'image',
-      mimes: ['image/jpeg', 'image/png'],
-      maxSize: 5,
     });
 
     await this.ArtistRepository.insert({
@@ -170,9 +187,20 @@ export class ArtistService {
       slug: formatSlug,
       email: dto.email,
       phone: formatPhone,
-      image: formatImage,
+      image: formatImage.fullpath,
       desc: dto.desc,
       created_by: user.id,
+    });
+
+    void this.uploadWorkerService.run({
+      task: 'image.processing',
+      data: {
+        context: 'artist',
+        buffer: image.buffer,
+        original_name: image.originalname,
+        filename: formatImage.fullpath,
+        dest: formatImage.filepath,
+      },
     });
 
     return {
@@ -184,15 +212,32 @@ export class ArtistService {
   /**
    * Handle update artist service
    * @param dto
+   * @param image
    * @param user
    * @returns
    */
-  async updateArtist(dto: UpdateArtistDto, user: IUser): Promise<MutationResponse> {
+  async updateArtist(
+    dto: UpdateArtistDto,
+    image: Express.Multer.File,
+    user: IUser,
+  ): Promise<MutationResponse> {
+    this.appLoggerService.addMeta('multipart/form-data', {
+      ...dto,
+      image: dto.is_update_image
+        ? {
+            fieldname: image.fieldname,
+            original_name: image.originalname,
+            mimetype: image.mimetype,
+            size: image.size,
+          }
+        : null,
+    });
+
     const getArtist = await this.ArtistRepository.findOne({
       where: {
         id: dto.id,
       },
-      select: ['id', 'name'],
+      select: ['id', 'name', 'image'],
     });
 
     if (!getArtist) {
@@ -210,17 +255,25 @@ export class ArtistService {
       }
     }
 
+    let filepath = '';
+    let fullpath = '';
+
+    if (dto.is_update_image) {
+      if (!image) throw new BadRequestException('Image is required');
+
+      const file = this.utilsService.validateFile(image, {
+        dest: '/artist',
+        type: 'image',
+      });
+
+      filepath = file.filepath;
+      fullpath = file.fullpath;
+    }
+
     const formatName = this.utilsService.validateUpperCase(dto.name);
     const formatSlug = this.utilsService.validateSlug(dto.name);
     const formatPhone = this.utilsService.validateReplacePhone(dto.phone, '08');
-    const formatImage = dto.is_update_image
-      ? this.utilsService.validateBase64File(dto.image, {
-          dest: '/artist',
-          type: 'image',
-          mimes: ['image/jpeg', 'image/png'],
-          maxSize: 5,
-        })
-      : dto.image;
+    const formatImage = dto.is_update_image ? fullpath : getArtist.image;
 
     await this.ArtistRepository.update(
       {
@@ -237,6 +290,19 @@ export class ArtistService {
         updated_by: user.id,
       },
     );
+
+    if (dto.is_update_image) {
+      void this.uploadWorkerService.run({
+        task: 'image.processing',
+        data: {
+          context: 'artist',
+          buffer: image.buffer,
+          original_name: image.originalname,
+          filename: fullpath,
+          dest: filepath,
+        },
+      });
+    }
 
     return {
       success: true,

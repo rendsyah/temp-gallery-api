@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { multerOptions } from 'src/commons/multer';
 
 import { ArtistService } from './artist.service';
 import { CreateArtistDto, DetailDto, ListArtistDto, UpdateArtistDto } from './artist.dto';
@@ -41,15 +54,31 @@ export class ArtistController {
 
   @Post()
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create artist' })
-  async createArtist(@Body() dto: CreateArtistDto, @User() user: IUser): Promise<MutationResponse> {
-    return await this.artistService.createArtist(dto, user);
+  @UseInterceptors(
+    FileInterceptor('image', multerOptions(['image/jpg', 'image/jpeg', 'image/png'], 5)),
+  )
+  async createArtist(
+    @Body() dto: CreateArtistDto,
+    @UploadedFile() image: Express.Multer.File,
+    @User() user: IUser,
+  ): Promise<MutationResponse> {
+    return await this.artistService.createArtist(dto, image, user);
   }
 
   @Patch()
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update artist' })
-  async updateArtist(@Body() dto: UpdateArtistDto, @User() user: IUser): Promise<MutationResponse> {
-    return await this.artistService.updateArtist(dto, user);
+  @UseInterceptors(
+    FileInterceptor('image', multerOptions(['image/jpg', 'image/jpeg', 'image/png'], 5)),
+  )
+  async updateArtist(
+    @Body() dto: UpdateArtistDto,
+    image: Express.Multer.File,
+    @User() user: IUser,
+  ): Promise<MutationResponse> {
+    return await this.artistService.updateArtist(dto, image, user);
   }
 }
