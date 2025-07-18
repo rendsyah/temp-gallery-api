@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ZodValidationPipe } from 'nestjs-zod';
@@ -21,6 +22,8 @@ import {
 
 import { RunnerModule } from './datasources/runner';
 
+import { UploadWorkerModule } from './workers/upload';
+
 import { ArtistModule } from './modules/artist/artist.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoryModule } from './modules/category/category.module';
@@ -33,6 +36,9 @@ import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
+    CacheModule.register({
+      isGlobal: true,
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), '..', 'public'),
       serveRoot: '/media',
@@ -65,6 +71,7 @@ import { UserModule } from './modules/user/user.module';
     AppLoggerModule,
     UtilsModule,
     RunnerModule,
+    UploadWorkerModule,
 
     ArtistModule,
     AuthModule,
