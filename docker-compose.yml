@@ -15,7 +15,6 @@ services:
       TZ: Asia/Jakarta
     volumes:
       - ../public:/vol/public
-    entrypoint: docker-entrypoint.sh
     restart: always
     networks:
       - shared-networks
