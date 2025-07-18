@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { UserAccessDetail } from './user_access_detail.entity';
+import { MasterPrivilege } from './master_privilege.entity';
 
 @Entity({ name: 'master_menu' })
 export class MasterMenu {
@@ -27,7 +27,7 @@ export class MasterMenu {
   level: number;
 
   @Column({ type: 'smallint', default: 0 })
-  header: number;
+  parent_id: number;
 
   @Column({ type: 'smallint', default: 0 })
   sort: number;
@@ -38,6 +38,13 @@ export class MasterMenu {
     comment: '0 -> inactive, 1 -> active',
   })
   status: number;
+
+  @Column({
+    type: 'smallint',
+    default: 0,
+    comment: '0 -> inactive, 1 -> active',
+  })
+  is_group: number;
 
   @CreateDateColumn({
     type: 'timestamp',
@@ -52,6 +59,6 @@ export class MasterMenu {
   })
   updated_at: Date | string;
 
-  @OneToMany(() => UserAccessDetail, (user_access_detail) => user_access_detail.menu)
-  user_access_detail: UserAccessDetail[];
+  @OneToMany(() => MasterPrivilege, (privilege) => privilege.menu)
+  privilege: MasterPrivilege[];
 }

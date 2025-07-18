@@ -8,19 +8,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { TransactionItems } from './transaction_items.entity';
+import { TransactionStatus } from '../../commons/constants';
 
-export enum TransactionStatus {
-  PENDING = 0,
-  WAITING_PROCESS = 1,
-  PROCESS = 2,
-  SHIPPED = 3,
-  DELIVERED = 4,
-  COMPLETED = 5,
-  CANCELLED = 6,
-  FAILED = 7,
-  REFUNDED = 8,
-}
+import { TransactionItems } from './transaction_items.entity';
 
 @Entity({ name: 'transactions' })
 export class Transactions {

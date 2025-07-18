@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 import { User } from './user.entity';
-import { UserAccessDetail } from './user_access_detail.entity';
+import { UserPermissions } from './user_permissions.entity';
 
 @Entity({ name: 'user_access' })
 export class UserAccess {
@@ -20,7 +20,7 @@ export class UserAccess {
   name: string;
 
   @Column({ type: 'varchar', length: 100 })
-  description: string;
+  desc: string;
 
   @Column({
     type: 'smallint',
@@ -60,6 +60,6 @@ export class UserAccess {
   @OneToMany(() => User, (user) => user.user_access)
   user: User[];
 
-  @OneToMany(() => UserAccessDetail, (user_access_detail) => user_access_detail.user_access)
-  user_access_detail: UserAccessDetail[];
+  @OneToMany(() => UserPermissions, (user_permissions) => user_permissions.user_access)
+  user_permissions: UserPermissions[];
 }
