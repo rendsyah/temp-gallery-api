@@ -13,6 +13,11 @@ export class DetailDto extends createZodCustomDto(DetailSchema) {}
 
 export class ListProductDto extends createZodCustomDto(ListProductSchema) {}
 
+export class CreateProductAwardDto extends createZodCustomDto(CreateProductAwardSchema) {}
+
+export class UpdateProductAwardDto extends createZodCustomDto(UpdateProductAwardSchema) {}
+
+// MULTIPART/FORM-DATA
 export class CreateProductDto extends createZodCustomDto(
   CreateProductSchema,
   fileFieldDto('images', 'multiple', true),
@@ -24,7 +29,3 @@ export class UpdateProductImageDto extends createZodCustomDto(
   UpdateProductImageSchema,
   fileFieldDto('images', 'multiple', false),
 ) {}
-
-export class CreateProductAwardDto extends createZodCustomDto(CreateProductAwardSchema) {}
-
-export class UpdateProductAwardDto extends createZodCustomDto(UpdateProductAwardSchema) {}
