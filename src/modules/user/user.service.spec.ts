@@ -183,13 +183,10 @@ describe('UserService', () => {
   describe('createAccess', () => {
     const mockDto = {
       name: 'Administrator',
-      description: 'Administrator Access',
-      access_detail: [
+      desc: 'Administrator Access',
+      privileges: [
         {
-          menu_id: 1,
-          m_created: 1,
-          m_updated: 1,
-          m_deleted: 1,
+          privilege_id: 1,
         },
       ],
     };
@@ -271,13 +268,10 @@ describe('UserService', () => {
     const mockDto = {
       id: 1,
       name: 'Administrator',
-      description: 'Administrator Access',
-      access_detail: [
+      desc: 'Administrator Access',
+      privileges: [
         {
-          menu_id: 1,
-          m_created: 1,
-          m_updated: 1,
-          m_deleted: 1,
+          privilege_id: 1,
         },
       ],
       status: 1,

@@ -1,12 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { InsertResult, Repository, SelectQueryBuilder, UpdateResult } from 'typeorm';
 
 import { AppConfigService } from 'src/commons/config';
 import { UtilsService } from 'src/commons/utils';
-import { User, UserAccessDetail, UserDevice, UserSession } from 'src/datasources/entities';
+import {
+  MasterMenu,
+  User,
+  UserDevice,
+  UserPermissions,
+  UserSession,
+} from 'src/datasources/entities';
 
 import { AuthService } from './auth.service';
 
@@ -16,8 +24,11 @@ describe('AuthService', () => {
   let utilsService: jest.Mocked<UtilsService>;
   let jwtService: jest.Mocked<JwtService>;
 
+  let cacheManager: jest.Mocked<Cache>;
+
+  let menuRepository: jest.Mocked<Repository<MasterMenu>>;
   let userRepository: jest.Mocked<Repository<User>>;
-  let userAccessDetailRepository: jest.Mocked<Repository<UserAccessDetail>>;
+  let userPermissionsRepository: jest.Mocked<Repository<UserPermissions>>;
   let userDeviceRepository: jest.Mocked<Repository<UserDevice>>;
   let userSessionRepository: jest.Mocked<Repository<UserSession>>;
 
@@ -37,12 +48,27 @@ describe('AuthService', () => {
           useValue: {
             validateCompare: jest.fn(),
             validateRandomChar: jest.fn(),
+            validatePathToRegex: jest.fn(),
+            validateTTLMs: jest.fn(),
           },
         },
         {
           provide: JwtService,
           useValue: {
             signAsync: jest.fn(),
+          },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(MasterMenu),
+          useValue: {
+            createQueryBuilder: jest.fn(),
           },
         },
         {
@@ -53,7 +79,7 @@ describe('AuthService', () => {
           },
         },
         {
-          provide: getRepositoryToken(UserAccessDetail),
+          provide: getRepositoryToken(UserPermissions),
           useValue: {
             createQueryBuilder: jest.fn(),
           },
@@ -82,9 +108,12 @@ describe('AuthService', () => {
     utilsService = module.get(UtilsService);
     jwtService = module.get(JwtService);
 
+    cacheManager = module.get(CACHE_MANAGER);
+
+    menuRepository = module.get(getRepositoryToken(MasterMenu));
     userRepository = module.get(getRepositoryToken(User));
-    userAccessDetailRepository = module.get(getRepositoryToken(UserAccessDetail));
     userDeviceRepository = module.get(getRepositoryToken(UserDevice));
+    userPermissionsRepository = module.get(getRepositoryToken(UserPermissions));
     userSessionRepository = module.get(getRepositoryToken(UserSession));
   });
 
@@ -206,7 +235,7 @@ describe('AuthService', () => {
         path: '/dashboard',
         icon: 'Dashboard',
         level: 1,
-        header: 0,
+        parent_id: 0,
       },
       {
         id: 2,
@@ -214,7 +243,7 @@ describe('AuthService', () => {
         path: '/dashboard/e-commerce',
         icon: 'Ecommerce',
         level: 2,
-        header: 1,
+        parent_id: 1,
       },
     ];
 
@@ -240,22 +269,22 @@ describe('AuthService', () => {
 
     const queryBuilder = (data: unknown[]) => {
       return {
-        innerJoin: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         addOrderBy: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue(data),
-      } as unknown as SelectQueryBuilder<UserAccessDetail>;
+      } as unknown as SelectQueryBuilder<MasterMenu>;
     };
 
     beforeEach(() => {
       const mockMenuQueryBuilder = queryBuilder(mockMenuQuery);
-      userAccessDetailRepository.createQueryBuilder.mockReturnValue(mockMenuQueryBuilder);
+      menuRepository.createQueryBuilder.mockReturnValue(mockMenuQueryBuilder);
     });
 
     it('should return ForbiddenException if no data', async () => {
-      userAccessDetailRepository.createQueryBuilder.mockReturnValue(queryBuilder([]));
+      menuRepository.createQueryBuilder.mockReturnValue(queryBuilder([]));
 
       await expect(service.menu(mockUser)).rejects.toThrow(ForbiddenException);
     });
@@ -268,6 +297,10 @@ describe('AuthService', () => {
   });
 
   describe('permission', () => {
+    const mockDto = {
+      path: '/dashboard',
+    };
+
     const mockUser = {
       id: 1,
       name: 'Admin',
@@ -280,9 +313,12 @@ describe('AuthService', () => {
       {
         id: 1,
         path: '/dashboard',
-        m_created: 1,
-        m_updated: 1,
-        m_deleted: 1,
+        actions: {
+          view: 1,
+          created: 1,
+          updated: 1,
+          deleted: 1,
+        },
       },
     ];
 
@@ -293,22 +329,34 @@ describe('AuthService', () => {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         getRawMany: jest.fn().mockResolvedValue(data),
-      } as unknown as SelectQueryBuilder<UserAccessDetail>;
+      } as unknown as SelectQueryBuilder<UserPermissions>;
     };
 
     beforeEach(() => {
+      cacheManager.get.mockResolvedValue(mockExpectedResult);
+
       const mockQueryBuilder = queryBuilder(mockExpectedResult);
-      userAccessDetailRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      userPermissionsRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+      utilsService.validatePathToRegex.mockReturnValue(new RegExp(mockDto.path));
+      cacheManager.set.mockResolvedValue(mockExpectedResult);
     });
 
     it('should return ForbiddenException if no data', async () => {
-      userAccessDetailRepository.createQueryBuilder.mockReturnValue(queryBuilder([]));
+      cacheManager.get.mockResolvedValue(undefined);
+      userPermissionsRepository.createQueryBuilder.mockReturnValue(queryBuilder([]));
 
-      await expect(service.permission(mockUser)).rejects.toThrow(ForbiddenException);
+      await expect(service.permission(mockDto, mockUser)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should return permission data if cache found', async () => {
+      const result = await service.permission(mockDto, mockUser);
+
+      expect(result).toEqual(mockExpectedResult);
     });
 
     it('should return permission data if found', async () => {
-      const result = await service.permission(mockUser);
+      const result = await service.permission(mockDto, mockUser);
 
       expect(result).toEqual(mockExpectedResult);
     });
@@ -375,7 +423,7 @@ describe('AuthService', () => {
         orderBy: jest.fn().mockReturnThis(),
         addOrderBy: jest.fn().mockReturnThis(),
         getRawOne: jest.fn().mockResolvedValue(data),
-      } as unknown as SelectQueryBuilder<UserAccessDetail>;
+      } as unknown as SelectQueryBuilder<UserPermissions>;
     };
 
     beforeEach(() => {
@@ -383,7 +431,7 @@ describe('AuthService', () => {
       userRepository.createQueryBuilder.mockReturnValue(mockUserQueryBuilder);
 
       const mockDirectionQueryBuilder = directionQueryBuilder(mockDirectionQuery);
-      userAccessDetailRepository.createQueryBuilder.mockReturnValue(mockDirectionQueryBuilder);
+      userPermissionsRepository.createQueryBuilder.mockReturnValue(mockDirectionQueryBuilder);
 
       utilsService.validateCompare.mockResolvedValue(true);
       jest.spyOn(service, 'signSession').mockResolvedValue(mockSignSession);
@@ -402,7 +450,7 @@ describe('AuthService', () => {
     });
 
     it('should return ForbiddenException if direction not found', async () => {
-      userAccessDetailRepository.createQueryBuilder.mockReturnValue(directionQueryBuilder(null));
+      userPermissionsRepository.createQueryBuilder.mockReturnValue(directionQueryBuilder(null));
 
       await expect(service.login(mockDto)).rejects.toThrow(ForbiddenException);
     });
