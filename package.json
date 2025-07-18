@@ -114,6 +114,7 @@
       "/src/commons/",
       "/src/datasources/",
       "/src/seeds/",
+      "/src/workers/",
       "/src/app.module.ts",
       "/src/app.service.ts",
       "/src/app.controller.ts",
