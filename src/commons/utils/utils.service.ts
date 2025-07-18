@@ -288,6 +288,14 @@ export class UtilsService {
 
     return maskRequest.join(' ');
   }
+  public validatePathToRegex(request: string): RegExp {
+    const pattern = '^' + request.replace(/:[^/]+/g, '[^/]+').replace(/\//g, '\\/') + '$';
+    return new RegExp(pattern);
+  }
+
+  public validateTTLMs(request: number): number {
+    return request * 60 * 1000;
+  }
 
   public pagination(request: IPagination): IPagination {
     const getPage = request.page ? +request.page : 1;
