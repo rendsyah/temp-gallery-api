@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { User } from 'src/commons/decorators';
@@ -6,7 +6,7 @@ import { IUser } from 'src/commons/utils/utils.types';
 import { JwtAuthGuard } from 'src/commons/guards';
 
 import { AuthService } from './auth.service';
-import { LoginDto } from './auth.dto';
+import { LoginDto, PermissionDto } from './auth.dto';
 import { LoginResponse, MenuResponse, MeResponse, PermissionResponse } from './auth.types';
 
 @ApiTags('Auth')
@@ -37,8 +37,8 @@ export class AuthController {
   @Get('/permission')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get permission user' })
-  async permission(@User() user: IUser): Promise<PermissionResponse[]> {
-    return await this.authService.permission(user);
+  async permission(@Query() dto: PermissionDto, @User() user: IUser): Promise<PermissionResponse> {
+    return await this.authService.permission(dto, user);
   }
 
   @Post('/login')

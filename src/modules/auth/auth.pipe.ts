@@ -18,3 +18,10 @@ export const LoginSchema = z.object({
     app_version: z.string().min(1).max(25),
   }),
 });
+
+export const PermissionSchema = z.object({
+  path: z
+    .string()
+    .min(1)
+    .regex(/^\/[a-zA-Z0-9-_]+(\/[a-zA-Z0-9-_]+)*$/),
+});

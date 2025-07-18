@@ -20,9 +20,7 @@ export type MenuResponse = IMenu[];
 export type PermissionResponse = {
   id: number;
   path: string;
-  m_created: number;
-  m_updated: number;
-  m_deleted: number;
+  actions: Record<string, number>;
 };
 
 export type LoginResponse = {

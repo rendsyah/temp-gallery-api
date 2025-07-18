@@ -1,19 +1,29 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { AppConfigService } from 'src/commons/config';
+import { CACHE_STORE_KEY, PERMISSION_ACTIONS } from 'src/commons/constants';
 import { UtilsService } from 'src/commons/utils';
 import { IMenu, IUser } from 'src/commons/utils/utils.types';
-import { User, UserAccessDetail, UserDevice, UserSession } from 'src/datasources/entities';
+import {
+  MasterMenu,
+  User,
+  UserDevice,
+  UserPermissions,
+  UserSession,
+} from 'src/datasources/entities';
 
-import { LoginDto } from './auth.dto';
+import { LoginDto, PermissionDto } from './auth.dto';
 import {
   LoginResponse,
   MenuResponse,
@@ -30,12 +40,17 @@ export class AuthService {
     private readonly utilsService: UtilsService,
     private readonly jwtService: JwtService,
 
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
+
+    @InjectRepository(MasterMenu)
+    private readonly MenuRepository: Repository<MasterMenu>,
     @InjectRepository(User)
     private readonly UserRepository: Repository<User>,
-    @InjectRepository(UserAccessDetail)
-    private readonly UserAccessDetailRepository: Repository<UserAccessDetail>,
     @InjectRepository(UserDevice)
     private readonly UserDeviceRepository: Repository<UserDevice>,
+    @InjectRepository(UserPermissions)
+    private readonly UserPermissionsRepository: Repository<UserPermissions>,
     @InjectRepository(UserSession)
     private readonly UserSessionRepository: Repository<UserSession>,
   ) {}
@@ -117,22 +132,30 @@ export class AuthService {
    * @returns
    */
   async menu(user: IUser): Promise<MenuResponse> {
-    const getMenu = await this.UserAccessDetailRepository.createQueryBuilder('access_det')
-      .innerJoin('access_det.menu', 'menu')
-      .innerJoin('access_det.user_access', 'access')
-      .innerJoin('access.user', 'user')
+    const getMenu = await this.MenuRepository.createQueryBuilder('menu')
       .select([
         'menu.id AS id',
         'menu.name AS name',
         'menu.path AS path',
         'menu.icon AS icon',
         'menu.level AS level',
-        'menu.header AS header',
+        'menu.parent_id AS parent_id',
+        'menu.is_group AS is_group',
       ])
-      .where('user.id = :user', { user: user.id })
-      .orderBy('menu.level', 'ASC')
+      .where('menu.status = :status', { status: 1 })
+      .andWhere(
+        `EXISTS (
+          SELECT 1
+          FROM user_permissions up
+          JOIN user_access ua ON ua.id = up.access_id
+          JOIN master_privilege mp ON mp.id = up.privilege_id
+          JOIN "user" u ON u.access_id = ua.id
+          WHERE mp.menu_id = menu.id AND u.id = :user_id
+        )`,
+        { user_id: user.id },
+      )
+      .orderBy('menu.parent_id', 'ASC')
       .addOrderBy('menu.sort', 'ASC')
-      .addOrderBy('menu.id', 'ASC')
       .getRawMany();
 
     if (getMenu.length === 0) {
@@ -149,15 +172,16 @@ export class AuthService {
         path: menu.path,
         icon: menu.icon,
         level: menu.level,
+        is_group: menu.is_group,
         child: [],
       };
 
       resultMap.set(data.id, data);
 
-      if (menu.header === 0) {
+      if (menu.parent_id === 0) {
         result.push(data);
       } else {
-        const parent = resultMap.get(menu.header);
+        const parent = resultMap.get(menu.parent_id);
         if (parent) parent.child.push(data);
       }
     }
@@ -167,30 +191,57 @@ export class AuthService {
 
   /**
    * Handle permission service
+   * @param dto
    * @param user
    * @returns
    */
-  async permission(user: IUser): Promise<PermissionResponse[]> {
-    const getPermission = await this.UserAccessDetailRepository.createQueryBuilder('access_det')
-      .innerJoin('access_det.menu', 'menu')
-      .innerJoin('access_det.user_access', 'access')
-      .innerJoin('access.user', 'user')
+  async permission(dto: PermissionDto, user: IUser): Promise<PermissionResponse> {
+    const PERMISSION_ACCESS = `${CACHE_STORE_KEY.PERMISSION_ACCESS}:${dto.path}:${user.access_name}`;
+    const getCachePermission = await this.cacheManager.get<PermissionResponse>(PERMISSION_ACCESS);
+
+    if (getCachePermission) {
+      return getCachePermission;
+    }
+
+    const getUserAction = await this.UserPermissionsRepository.createQueryBuilder(
+      'user_permissions',
+    )
       .select([
-        'menu.id AS id',
-        'menu.path AS path',
-        'access_det.m_created AS m_created',
-        'access_det.m_updated AS m_updated',
-        'access_det.m_deleted AS m_deleted',
+        'privilege.menu_id AS menu_id',
+        'privilege.action AS action',
+        'permissions.path AS path',
       ])
-      .where('user.id = :id', { id: user.id })
-      .andWhere("menu.path != ''")
+      .innerJoin('user_permissions.user_access', 'access')
+      .innerJoin('user_permissions.privilege', 'privilege')
+      .innerJoin('privilege.permissions', 'permissions')
+      .innerJoin('access.user', 'user')
+      .where('user.id = :user', { user: user.id })
       .getRawMany();
 
-    if (getPermission.length === 0) {
+    const getMatchPermission = getUserAction.find((action) => {
+      const regex = this.utilsService.validatePathToRegex(action.path);
+      return regex.test(dto.path);
+    });
+
+    if (!getMatchPermission) {
       throw new ForbiddenException(`Sorry, you don't have access to this resource.`);
     }
 
-    return getPermission as PermissionResponse[];
+    const related = getUserAction.filter((action) => action.menu_id === getMatchPermission.menu_id);
+    const actions = Object.values(PERMISSION_ACTIONS).reduce((acc, action) => {
+      acc[action] = related.some((userAction) => userAction.action === (action as string)) ? 1 : 0;
+      return acc;
+    }, {});
+
+    const response = {
+      id: getMatchPermission.menu_id,
+      path: dto.path,
+      actions,
+    };
+
+    await this.cacheManager.set(PERMISSION_ACCESS, response, this.utilsService.validateTTLMs(60));
+
+    return response;
   }
 
   /**
@@ -218,19 +269,21 @@ export class AuthService {
 
     if (!getCompare) throw new BadRequestException('Username or password is incorrect');
 
-    const getDirection = await this.UserAccessDetailRepository.createQueryBuilder('access_det')
-      .innerJoin('access_det.user_access', 'access')
-      .innerJoin('access_det.menu', 'menu')
+    const getDirectionUser = await this.UserPermissionsRepository.createQueryBuilder(
+      'user_permissions',
+    )
+      .innerJoin('user_permissions.privilege', 'privilege')
+      .innerJoin('user_permissions.user_access', 'access')
+      .innerJoin('privilege.menu', 'menu')
       .innerJoin('access.user', 'user')
       .select(['menu.path AS path'])
-      .where('access.id = :access_id', { access_id: getUser.access_id })
-      .andWhere("menu.path != ''")
-      .orderBy('menu.level', 'ASC')
+      .where('menu.is_group = :is_group', { is_group: 0 })
+      .andWhere('access.id = :access_id', { access_id: getUser.access_id })
+      .orderBy('menu.parent_id', 'ASC')
       .addOrderBy('menu.sort', 'ASC')
-      .addOrderBy('menu.id', 'ASC')
       .getRawOne();
 
-    if (!getDirection) {
+    if (!getDirectionUser) {
       throw new ForbiddenException(`Sorry, you don't have access to this resource.`);
     }
 
@@ -310,7 +363,7 @@ export class AuthService {
 
     return {
       access_token: getSession.access_token,
-      redirect_to: getDirection.path,
+      redirect_to: getDirectionUser.path,
     };
   }
 }
