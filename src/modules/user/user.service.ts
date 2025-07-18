@@ -5,7 +5,7 @@ import { QueryRunner, Repository } from 'typeorm';
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
-import { User, UserAccess, UserAccessDetail } from 'src/datasources/entities';
+import { User, UserAccess, UserPermissions } from 'src/datasources/entities';
 
 import {
   CreateAccessDto,
@@ -295,7 +295,7 @@ export class UserService {
       .select([
         'access.id AS id',
         'access.name AS name',
-        'access.description AS description',
+        'access.desc AS desc',
         'access.status AS status',
         `CASE
           WHEN access.status = 1 THEN 'Active'
@@ -352,31 +352,28 @@ export class UserService {
     }
 
     const formatName = this.utilsService.validateUpperCase(dto.name);
-    const formatDescription = this.utilsService.validateUpperCase(dto.description);
+    const formatDesc = this.utilsService.validateUpperCase(dto.desc);
 
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
       const accessResult = await queryRunner.manager.insert(UserAccess, {
         name: formatName,
-        description: formatDescription,
+        desc: formatDesc,
         created_by: user.id,
       });
 
-      const insertAccessDetail = dto.access_detail.map((item) => {
+      const insertUserPermissions = dto.privileges.map((item) => {
         return {
           access_id: +accessResult.generatedMaps[0].id,
-          menu_id: item.menu_id,
-          m_created: item.m_created,
-          m_updated: item.m_updated,
-          m_deleted: item.m_deleted,
+          privilege_id: item.privilege_id,
           created_by: user.id,
         };
       });
 
       await queryRunner.manager
-        .createQueryBuilder(UserAccessDetail, 'access_det')
+        .createQueryBuilder(UserPermissions, 'user_permissions')
         .insert()
-        .into(UserAccessDetail)
-        .values(insertAccessDetail)
+        .into(UserPermissions)
+        .values(insertUserPermissions)
         .execute();
     });
 
@@ -416,7 +413,7 @@ export class UserService {
     }
 
     const formatName = this.utilsService.validateUpperCase(dto.name);
-    const formatDescription = this.utilsService.validateUpperCase(dto.description);
+    const formatDesc = this.utilsService.validateUpperCase(dto.desc);
 
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
       await queryRunner.manager.update(
@@ -424,33 +421,30 @@ export class UserService {
         { id: dto.id },
         {
           name: formatName,
-          description: formatDescription,
+          desc: formatDesc,
           status: dto.status,
           updated_by: user.id,
         },
       );
 
-      await queryRunner.manager.delete(UserAccessDetail, {
+      await queryRunner.manager.delete(UserPermissions, {
         access_id: dto.id,
       });
 
-      const insertAccessDetail = dto.access_detail.map((item) => {
+      const insertUserPermissions = dto.privileges.map((item) => {
         return {
           access_id: dto.id,
-          menu_id: item.menu_id,
-          m_created: item.m_created,
-          m_updated: item.m_updated,
-          m_deleted: item.m_deleted,
+          privilege_id: item.privilege_id,
           created_by: getAccess.created_by,
           updated_by: user.id,
         };
       });
 
       await queryRunner.manager
-        .createQueryBuilder(UserAccessDetail, 'access_det')
+        .createQueryBuilder(UserPermissions, 'user_permissions')
         .insert()
-        .into(UserAccessDetail)
-        .values(insertAccessDetail)
+        .into(UserPermissions)
+        .values(insertUserPermissions)
         .execute();
     });
 
