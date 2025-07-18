@@ -1,7 +1,18 @@
 import { DataSource } from 'typeorm';
 import argon2 from '@node-rs/argon2';
 
-import { MasterMenu, User, UserAccess, UserAccessDetail } from '../datasources/entities';
+import { PERMISSION_ACTIONS, PERMISSION_TYPES } from '../commons/constants';
+
+import {
+  MasterMenu,
+  MasterPermissions,
+  MasterPrivilege,
+  User,
+  UserAccess,
+  UserPermissions,
+} from '../datasources/entities';
+
+import { MENUS } from './mock.seed';
 
 export const seedInit = async (dataSource: DataSource) => {
   const accessRepository = dataSource.getRepository(UserAccess);
@@ -19,166 +30,121 @@ export const seedInit = async (dataSource: DataSource) => {
         .createQueryBuilder()
         .insert()
         .into(MasterMenu)
-        .values([
-          {
-            name: 'Dashboard',
-            path: '/dashboard',
-            icon: 'Dashboard',
-            level: 1,
-            header: 0,
-            sort: 1,
-          },
-          {
-            name: 'Maintaince',
-            path: '',
-            icon: 'Maintaince',
-            level: 1,
-            header: 0,
-            sort: 2,
-          },
-          {
-            name: 'User',
-            path: '/maintaince/user',
-            icon: '',
-            level: 2,
-            header: 2,
-            sort: 1,
-          },
-          {
-            name: 'Role',
-            path: '/maintaince/role',
-            icon: '',
-            level: 2,
-            header: 2,
-            sort: 2,
-          },
-          {
-            name: 'Role Menu',
-            path: '/maintaince/role-menu',
-            icon: '',
-            level: 2,
-            header: 2,
-            sort: 3,
-          },
-          {
-            name: 'Master Setup',
-            path: '',
-            icon: 'Setup',
-            level: 1,
-            header: 0,
-            sort: 3,
-          },
-          {
-            name: 'Banner',
-            path: '/master-setup/banner',
-            icon: '',
-            level: 2,
-            header: 6,
-            sort: 1,
-          },
-          {
-            name: 'Article',
-            path: '/master-setup/article',
-            icon: '',
-            level: 2,
-            header: 6,
-            sort: 2,
-          },
-          {
-            name: 'Contact',
-            path: '/master-setup/contact',
-            icon: '',
-            level: 2,
-            header: 6,
-            sort: 3,
-          },
-          {
-            name: 'Master Product',
-            path: '',
-            icon: 'Product',
-            level: 1,
-            header: 0,
-            sort: 4,
-          },
-          {
-            name: 'Category',
-            path: '/master-product/category',
-            icon: '',
-            level: 2,
-            header: 10,
-            sort: 1,
-          },
-          {
-            name: 'Sub Category',
-            path: '/master-product/sub-category',
-            icon: '',
-            level: 2,
-            header: 10,
-            sort: 2,
-          },
-          {
-            name: 'Field Category',
-            path: '/master-product/field-category',
-            icon: '',
-            level: 2,
-            header: 10,
-            sort: 3,
-          },
-          {
-            name: 'Theme',
-            path: '/master-product/theme',
-            icon: '',
-            level: 2,
-            header: 10,
-            sort: 4,
-          },
-          {
-            name: 'Product',
-            path: '/master-product/product',
-            icon: '',
-            level: 2,
-            header: 10,
-            sort: 5,
-          },
-          {
-            name: 'Order',
-            path: '',
-            icon: 'Order',
-            level: 1,
-            header: 0,
-            sort: 5,
-          },
-          {
-            name: 'Order List',
-            path: 'order/order-list',
-            icon: '',
-            level: 2,
-            header: 16,
-            sort: 1,
-          },
-        ])
+        .values(MENUS)
+        .returning('*')
         .execute();
 
       const accessResult = await manager.getRepository(UserAccess).insert({
         name: 'Superuser',
-        description: 'Superuser Access',
+        desc: 'Superuser Access',
         is_show: 0,
       });
 
-      const insertAccessDetail = menuResult.generatedMaps.map((menu) => ({
+      const resultMenu = menuResult.generatedMaps as MasterMenu[];
+      const privileges: Partial<MasterPrivilege>[] = [];
+
+      for (const menu of resultMenu) {
+        const slug = menu.name.toUpperCase().replace(/\s+/g, '_');
+
+        if (menu.is_group === 1) {
+          privileges.push({
+            menu_id: menu.id,
+            code: `${slug}:VIEW`,
+            action: PERMISSION_ACTIONS.VIEW,
+          });
+        } else {
+          privileges.push({
+            menu_id: menu.id,
+            code: `${slug}:VIEW`,
+            action: PERMISSION_ACTIONS.VIEW,
+          });
+          privileges.push({
+            menu_id: menu.id,
+            code: `${slug}:CREATE`,
+            action: PERMISSION_ACTIONS.CREATE,
+          });
+          privileges.push({
+            menu_id: menu.id,
+            code: `${slug}:UPDATE`,
+            action: PERMISSION_ACTIONS.UPDATE,
+          });
+          privileges.push({
+            menu_id: menu.id,
+            code: `${slug}:DELETE`,
+            action: PERMISSION_ACTIONS.DELETE,
+          });
+        }
+      }
+
+      const privilegeResult = await manager
+        .getRepository(MasterPrivilege)
+        .createQueryBuilder()
+        .insert()
+        .into(MasterPrivilege)
+        .values(privileges)
+        .returning('*')
+        .execute();
+
+      const resultPrivileges = privilegeResult.generatedMaps as MasterPrivilege[];
+      const permissions: Partial<MasterPermissions>[] = [];
+
+      for (const res of resultPrivileges) {
+        const indexMenu = resultMenu.findIndex((menu) => menu.id === res.menu_id);
+        const menu = resultMenu[indexMenu];
+
+        if (menu.is_group === 1) {
+          continue;
+        }
+
+        if (res.action === 'view') {
+          permissions.push({
+            privilege_id: res.id,
+            path: menu.path,
+            type: PERMISSION_TYPES.ACTION,
+          });
+        }
+        if (res.action === 'create') {
+          permissions.push({
+            privilege_id: res.id,
+            path: `${menu.path}/create`,
+            type: PERMISSION_TYPES.ACTION,
+          });
+        }
+        if (res.action === 'update') {
+          permissions.push({
+            privilege_id: res.id,
+            path: `${menu.path}/detail/:id`,
+            type: PERMISSION_TYPES.ACTION,
+          });
+        }
+        if (res.action === 'delete') {
+          permissions.push({
+            privilege_id: res.id,
+            path: '',
+            type: PERMISSION_TYPES.ACTION,
+          });
+        }
+      }
+
+      const insertUserPermissions = privilegeResult.generatedMaps.map((privilege) => ({
         access_id: +accessResult.generatedMaps[0].id,
-        menu_id: +menu.id,
-        m_created: 1,
-        m_updated: 1,
-        m_deleted: 1,
+        privilege_id: +privilege.id,
       }));
 
       await manager
-        .getRepository(UserAccessDetail)
+        .getRepository(MasterPermissions)
         .createQueryBuilder()
         .insert()
-        .into(UserAccessDetail)
-        .values(insertAccessDetail)
+        .into(MasterPermissions)
+        .values(permissions)
+        .execute();
+
+      await manager
+        .getRepository(UserPermissions)
+        .createQueryBuilder()
+        .insert()
+        .into(UserPermissions)
+        .values(insertUserPermissions)
         .execute();
 
       const formatPass = await argon2.hash('12345678');
