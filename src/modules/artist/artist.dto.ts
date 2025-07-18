@@ -10,6 +10,7 @@ export class DetailDto extends createZodCustomDto(DetailSchema) {}
 
 export class ListArtistDto extends createZodCustomDto(ListArtistSchema) {}
 
+// MULTIPART/FORM-DATA
 export class CreateArtistDto extends createZodCustomDto(
   CreateArtistSchema,
   fileFieldDto('image', 'single', true),
