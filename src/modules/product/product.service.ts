@@ -6,19 +6,17 @@ import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
-import { ProductAwards, ProductImages, Products } from 'src/datasources/entities';
+import { ProductImages, Products } from 'src/datasources/entities';
 import { UploadWorkerService } from 'src/workers/upload';
 
 import {
-  CreateProductAwardDto,
   CreateProductDto,
   DetailDto,
   ListProductDto,
-  UpdateProductAwardDto,
   UpdateProductDto,
   UpdateProductImageDto,
 } from './product.dto';
-import { DetailProductResponse, ListProductResponse, ProductAwardResponse } from './product.types';
+import { DetailProductResponse, ListProductResponse } from './product.types';
 
 @Injectable()
 export class ProductService {
@@ -32,8 +30,6 @@ export class ProductService {
     private readonly ProductRepository: Repository<Products>,
     @InjectRepository(ProductImages)
     private readonly ProductImageRepository: Repository<ProductImages>,
-    @InjectRepository(ProductAwards)
-    private readonly ProductAwardRepository: Repository<ProductAwards>,
   ) {}
 
   /**
@@ -464,129 +460,6 @@ export class ProductService {
     return {
       success: true,
       message: 'Successfully updated',
-    };
-  }
-
-  /**
-   * Handle get product award service
-   * @param dto
-   * @returns
-   */
-  async getProductAward(dto: DetailDto): Promise<ProductAwardResponse[]> {
-    const getProductAward = await this.ProductAwardRepository.createQueryBuilder('award')
-      .select([
-        'award.id AS id',
-        'award.title AS title',
-        'award.desc AS desc',
-        'award.year AS year',
-      ])
-      .where('award.product_id = :product_id', { product_id: dto.id })
-      .getRawMany();
-
-    return getProductAward as ProductAwardResponse[];
-  }
-
-  /**
-   * Handle create product award service
-   * @param dto
-   * @param user
-   * @returns
-   */
-  async createProductAward(dto: CreateProductAwardDto, user: IUser): Promise<MutationResponse> {
-    let awards: ProductAwards[] = [];
-
-    await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      const insertAwards = dto.awards.map((item) => {
-        const formatTitle = this.utilsService.validateUpperCase(item.title);
-        return {
-          product_id: dto.product_id,
-          title: formatTitle,
-          desc: item.desc,
-          year: item.year,
-          created_by: user.id,
-        };
-      });
-
-      const insertResult = await queryRunner.manager
-        .createQueryBuilder(ProductAwards, 'award')
-        .insert()
-        .into(ProductAwards)
-        .values(insertAwards)
-        .returning(['id', 'title', 'desc', 'year'])
-        .execute();
-
-      awards = insertResult.raw;
-    });
-
-    return {
-      success: true,
-      message: 'Successfully created',
-      data: awards,
-    };
-  }
-
-  /**
-   * Handle update product award service
-   * @param dto
-   * @param user
-   * @returns
-   */
-  async updateProductAward(dto: UpdateProductAwardDto, user: IUser): Promise<MutationResponse> {
-    const getProductAward = await this.ProductAwardRepository.findOne({
-      where: {
-        id: dto.id,
-      },
-      select: ['id'],
-    });
-
-    if (!getProductAward) {
-      throw new BadRequestException('Product award not found');
-    }
-
-    const formatTitle = this.utilsService.validateUpperCase(dto.title);
-
-    await this.ProductAwardRepository.update(
-      {
-        id: dto.id,
-      },
-      {
-        title: formatTitle,
-        desc: dto.desc,
-        year: dto.year,
-        updated_by: user.id,
-      },
-    );
-
-    return {
-      success: true,
-      message: 'Successfully updated',
-    };
-  }
-
-  /**
-   * Handle delete product award service
-   * @param dto
-   * @returns
-   */
-  async deleteProductAward(dto: DetailDto): Promise<MutationResponse> {
-    const getProductAward = await this.ProductAwardRepository.findOne({
-      where: {
-        id: dto.id,
-      },
-      select: ['id'],
-    });
-
-    if (!getProductAward) {
-      throw new NotFoundException('Product award not found');
-    }
-
-    await this.ProductAwardRepository.delete({
-      id: dto.id,
-    });
-
-    return {
-      success: true,
-      message: 'Successfully deleted',
     };
   }
 }
