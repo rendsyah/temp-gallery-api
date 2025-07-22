@@ -8,9 +8,9 @@ import { ProductCategory } from 'src/datasources/entities';
 
 import { CreateCategoryDto, DetailDto, ListCategoryDto, UpdateCategoryDto } from './category.dto';
 import {
-  CategoryOptionsResponse,
   DetailCategoryResponse,
   ListCategoryResponse,
+  OptionsCategoryResponse,
 } from './category.types';
 
 @Injectable()
@@ -51,16 +51,16 @@ export class CategoryService {
   }
 
   /**
-   * Handle get category options service
+   * Handle get options category service
    * @returns
    */
-  async getCategoryOptions(): Promise<CategoryOptionsResponse[]> {
+  async getOptionsCategory(): Promise<OptionsCategoryResponse[]> {
     const getCategory = await this.CategoryRepository.createQueryBuilder('category')
       .select(['category.id AS id', 'category.name AS name'])
       .where('category.status = :status', { status: 1 })
       .getRawMany();
 
-    return getCategory as CategoryOptionsResponse[];
+    return getCategory as OptionsCategoryResponse[];
   }
 
   /**

@@ -7,7 +7,7 @@ import { User } from 'src/commons/decorators';
 
 import { ThemeService } from './theme.service';
 import { CreateThemeDto, DetailDto, ListThemeDto, UpdateThemeDto } from './theme.dto';
-import { DetailThemeResponse, ListThemeResponse, ThemeOptionsResponse } from './theme.types';
+import { DetailThemeResponse, ListThemeResponse, OptionsThemeResponse } from './theme.types';
 
 @ApiTags('Theme')
 @UseGuards(JwtAuthGuard)
@@ -27,9 +27,9 @@ export class ThemeController {
 
   @Get('/options')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get theme options' })
-  async getThemeOptions(): Promise<ThemeOptionsResponse[]> {
-    return await this.themeService.getThemeOptions();
+  @ApiOperation({ summary: 'Get options theme' })
+  async getOptionsTheme(): Promise<OptionsThemeResponse[]> {
+    return await this.themeService.getOptionsTheme();
   }
 
   @Get('/list')

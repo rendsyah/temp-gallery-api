@@ -7,7 +7,7 @@ import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { ProductThemes } from 'src/datasources/entities';
 
 import { CreateThemeDto, DetailDto, ListThemeDto, UpdateThemeDto } from './theme.dto';
-import { DetailThemeResponse, ListThemeResponse, ThemeOptionsResponse } from './theme.types';
+import { DetailThemeResponse, ListThemeResponse, OptionsThemeResponse } from './theme.types';
 
 @Injectable()
 export class ThemeService {
@@ -47,16 +47,16 @@ export class ThemeService {
   }
 
   /**
-   * Handle get theme options service
+   * Handle get options theme service
    * @returns
    */
-  async getThemeOptions(): Promise<ThemeOptionsResponse[]> {
+  async getOptionsTheme(): Promise<OptionsThemeResponse[]> {
     const getTheme = await this.ThemeRepository.createQueryBuilder('theme')
       .select(['theme.id AS id', 'theme.name AS name'])
       .where('theme.status = :status', { status: 1 })
       .getRawMany();
 
-    return getTheme as ThemeOptionsResponse[];
+    return getTheme as OptionsThemeResponse[];
   }
 
   /**

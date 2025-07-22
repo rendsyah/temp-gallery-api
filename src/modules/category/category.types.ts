@@ -7,7 +7,7 @@ export type DetailCategoryResponse = Nullable<{
   status: number;
 }>;
 
-export type CategoryOptionsResponse = {
+export type OptionsCategoryResponse = {
   id: number;
   name: string;
 };

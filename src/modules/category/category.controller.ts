@@ -8,9 +8,9 @@ import { User } from 'src/commons/decorators';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto, DetailDto, ListCategoryDto, UpdateCategoryDto } from './category.dto';
 import {
-  CategoryOptionsResponse,
   DetailCategoryResponse,
   ListCategoryResponse,
+  OptionsCategoryResponse,
 } from './category.types';
 
 @ApiTags('Category')
@@ -31,9 +31,9 @@ export class CategoryController {
 
   @Get('/options')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get category options' })
-  async getCategoryOptions(): Promise<CategoryOptionsResponse[]> {
-    return await this.categoryService.getCategoryOptions();
+  @ApiOperation({ summary: 'Get options category' })
+  async getOptionsCategory(): Promise<OptionsCategoryResponse[]> {
+    return await this.categoryService.getOptionsCategory();
   }
 
   @Get('/list')

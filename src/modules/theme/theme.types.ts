@@ -7,7 +7,7 @@ export type DetailThemeResponse = Nullable<{
   status: number;
 }>;
 
-export type ThemeOptionsResponse = {
+export type OptionsThemeResponse = {
   id: number;
   name: string;
 };
