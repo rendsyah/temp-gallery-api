@@ -17,10 +17,10 @@ import {
   UpdateUserDto,
 } from './user.dto';
 import {
-  AccessOptionsResponse,
   DetailUserResponse,
   ListAccessResponse,
   ListUserResponse,
+  OptionsAccessResponse,
   UserResponse,
 } from './user.types';
 
@@ -322,17 +322,17 @@ export class UserService {
   }
 
   /**
-   * Handle get access options service
+   * Handle get options access service
    * @returns
    */
-  async getAccessOptions(): Promise<AccessOptionsResponse[]> {
+  async getOptionsAccess(): Promise<OptionsAccessResponse[]> {
     const getAccess = await this.UserAccessRepository.createQueryBuilder('access')
       .select(['access.id AS id', 'access.name AS name'])
       .where('access.status = :status', { status: 1 })
       .andWhere('access.is_show = :is_show', { is_show: 1 })
       .getRawMany();
 
-    return getAccess as AccessOptionsResponse[];
+    return getAccess as OptionsAccessResponse[];
   }
 
   /**

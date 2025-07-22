@@ -19,8 +19,8 @@ import {
   ListUserResponse,
   UserResponse,
   DetailUserResponse,
-  AccessOptionsResponse,
   ListAccessResponse,
+  OptionsAccessResponse,
 } from './user.types';
 
 @ApiTags('User')
@@ -69,9 +69,9 @@ export class UserController {
 
   @Get('/access/options')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get access options' })
-  async getAccessOptions(): Promise<AccessOptionsResponse[]> {
-    return await this.userService.getAccessOptions();
+  @ApiOperation({ summary: 'Get options access' })
+  async getOptionsAccess(): Promise<OptionsAccessResponse[]> {
+    return await this.userService.getOptionsAccess();
   }
 
   @Get('/access/list')

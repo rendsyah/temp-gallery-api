@@ -41,7 +41,7 @@ export type ListAccessResponse = IPaginationResponse<{
   updated_at: string;
 }>;
 
-export type AccessOptionsResponse = {
+export type OptionsAccessResponse = {
   id: number;
   name: string;
 };
