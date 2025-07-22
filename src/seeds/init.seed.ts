@@ -113,7 +113,7 @@ export const seedInit = async (dataSource: DataSource) => {
         if (res.action === 'update') {
           permissions.push({
             privilege_id: res.id,
-            path: `${menu.path}/detail/:id`,
+            path: `${menu.path}/:id/update`,
             type: PERMISSION_TYPES.ACTION,
           });
         }
