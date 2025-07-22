@@ -10,12 +10,13 @@ import {
   CreateSubCategoryDto,
   DetailDto,
   ListSubCategoryDto,
+  OptionsSubCategoryDto,
   UpdateSubCategoryDto,
 } from './sub-category.dto';
 import {
   DetailSubCategoryResponse,
   ListSubCategoryResponse,
-  SubCategoryOptionsResponse,
+  OptionsSubCategoryResponse,
 } from './sub-category.types';
 
 @Injectable()
@@ -36,6 +37,7 @@ export class SubCategoryService {
     const getSubCategory = await this.SubCategoryRepository.createQueryBuilder('sub_category')
       .select([
         'sub_category.id AS id',
+        'sub_category.category_id AS category_id',
         'sub_category.name AS name',
         'sub_category.desc AS desc',
         'sub_category.status AS status',
@@ -49,6 +51,7 @@ export class SubCategoryService {
 
     return {
       id: getSubCategory.id,
+      category_id: getSubCategory.category_id,
       name: getSubCategory.name,
       desc: getSubCategory.desc,
       status: getSubCategory.status,
@@ -56,16 +59,18 @@ export class SubCategoryService {
   }
 
   /**
-   * Handle get sub category options service
+   * Handle get options sub category service
+   * @param dto
    * @returns
    */
-  async getSubCategoryOptions(): Promise<SubCategoryOptionsResponse[]> {
+  async getOptionsSubCategory(dto: OptionsSubCategoryDto): Promise<OptionsSubCategoryResponse[]> {
     const getSubCategory = await this.SubCategoryRepository.createQueryBuilder('sub_category')
       .select(['sub_category.id AS id', 'sub_category.name AS name'])
-      .where('sub_category.status = :status', { status: 1 })
+      .where('sub_category.category_id = :category_id', { category_id: dto.category_id })
+      .andWhere('sub_category.status = :status', { status: 1 })
       .getRawMany();
 
-    return getSubCategory as SubCategoryOptionsResponse[];
+    return getSubCategory as OptionsSubCategoryResponse[];
   }
 
   /**
@@ -87,7 +92,10 @@ export class SubCategoryService {
       endDate,
     } = pagination;
 
-    const baseQuery = this.SubCategoryRepository.createQueryBuilder('sub_category');
+    const baseQuery = this.SubCategoryRepository.createQueryBuilder('sub_category').innerJoin(
+      'sub_category.category',
+      'category',
+    );
 
     if (search) {
       baseQuery.andWhere('sub_category.name ILIKE :search', { search: `%${search}%` });
@@ -108,6 +116,7 @@ export class SubCategoryService {
     const itemsQuery = baseQuery
       .select([
         'sub_category.id AS id',
+        'category.name AS category_name',
         'sub_category.name AS name',
         'sub_category.desc AS desc',
         'sub_category.status AS status',
@@ -155,6 +164,7 @@ export class SubCategoryService {
     const formatDesc = this.utilsService.validateUpperCase(dto.desc);
 
     await this.SubCategoryRepository.insert({
+      category_id: dto.category_id,
       name: formatName,
       desc: formatDesc,
       created_by: user.id,
@@ -203,6 +213,7 @@ export class SubCategoryService {
         id: dto.id,
       },
       {
+        category_id: dto.category_id,
         name: formatName,
         desc: formatDesc,
         status: dto.status,

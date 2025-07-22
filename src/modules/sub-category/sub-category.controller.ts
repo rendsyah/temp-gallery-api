@@ -10,12 +10,13 @@ import {
   CreateSubCategoryDto,
   DetailDto,
   ListSubCategoryDto,
+  OptionsSubCategoryDto,
   UpdateSubCategoryDto,
 } from './sub-category.dto';
 import {
   DetailSubCategoryResponse,
   ListSubCategoryResponse,
-  SubCategoryOptionsResponse,
+  OptionsSubCategoryResponse,
 } from './sub-category.types';
 
 @ApiTags('Sub Category')
@@ -36,9 +37,11 @@ export class SubCategoryController {
 
   @Get('/options')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get sub category options' })
-  async getSubCategoryOptions(): Promise<SubCategoryOptionsResponse[]> {
-    return await this.subCategoryService.getSubCategoryOptions();
+  @ApiOperation({ summary: 'Get options sub category' })
+  async getOptionsSubCategory(
+    @Query() dto: OptionsSubCategoryDto,
+  ): Promise<OptionsSubCategoryResponse[]> {
+    return await this.subCategoryService.getOptionsSubCategory(dto);
   }
 
   @Get('/list')

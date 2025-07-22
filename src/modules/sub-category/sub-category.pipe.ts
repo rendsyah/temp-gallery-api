@@ -4,6 +4,10 @@ export const DetailSchema = z.object({
   id: z.preprocess((value) => Number(value), z.number().min(1)),
 });
 
+export const OptionsSubCategorySchema = z.object({
+  category_id: z.preprocess((value) => Number(value), z.number().min(1)),
+});
+
 export const ListSubCategorySchema = z.object({
   page: z.preprocess((value) => Number(value), z.number().min(1)),
   limit: z.preprocess((value) => Number(value), z.number().min(1).max(100)),
@@ -11,7 +15,7 @@ export const ListSubCategorySchema = z.object({
     .preprocess((value) => Number(value), z.number().min(0).max(1))
     .optional()
     .describe('0 -> inactive, 1 -> active'),
-  orderBy: z.enum(['id', 'name', 'status']).optional(),
+  orderBy: z.enum(['id', 'category_name', 'name', 'status']).optional(),
   sort: z.enum(['ASC', 'DESC']).optional(),
   search: z.string().min(1).optional(),
   startDate: z
@@ -27,6 +31,7 @@ export const ListSubCategorySchema = z.object({
 });
 
 export const CreateSubCategorySchema = z.object({
+  category_id: z.number().min(1),
   name: z.string().min(1).max(50),
   desc: z.string().min(1).max(100),
 });
