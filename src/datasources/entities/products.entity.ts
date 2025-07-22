@@ -10,13 +10,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { ProductArtists } from './product_artists.entity';
-import { ProductAwards } from './product_awards.entity';
+import { MasterArtists } from './master_artists.entity';
 import { ProductCategory } from './product_category.entity';
 import { ProductSubCategory } from './product_sub_category.entity';
 import { ProductThemes } from './product_themes.entity';
-import { TransactionItems } from './transaction_items.entity';
 import { ProductImages } from './product_images.entity';
+import { TransactionItems } from './transaction_items.entity';
 
 @Entity({ name: 'products' })
 export class Products {
@@ -27,9 +26,9 @@ export class Products {
   @Index()
   artist_id: number;
 
-  @ManyToOne(() => ProductArtists, (artist) => artist.product)
+  @ManyToOne(() => MasterArtists, (artist) => artist.product)
   @JoinColumn({ name: 'artist_id', referencedColumnName: 'id' })
-  artist: ProductArtists;
+  artist: MasterArtists;
 
   @Column({ type: 'int', nullable: true })
   @Index()
@@ -109,9 +108,6 @@ export class Products {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updated_at: Date | string;
-
-  @OneToMany(() => ProductAwards, (award) => award.product)
-  award: ProductAwards[];
 
   @OneToMany(() => ProductImages, (product_images) => product_images.product)
   product_images: ProductImages[];

@@ -3,33 +3,35 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  JoinColumn,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
+import { MasterExhibitions } from './master_exhibitions.entity';
 import { Products } from './products.entity';
-import { ProductCategory } from './product_category.entity';
 
-@Entity({ name: 'product_sub_category' })
-export class ProductSubCategory {
+@Entity({ name: 'master_artists' })
+export class MasterArtists {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int', nullable: true })
-  @Index()
-  category_id: number;
-
-  @ManyToOne(() => ProductCategory, (category) => category.sub_category)
-  @JoinColumn({ name: 'category_id', referencedColumnName: 'id' })
-  category: ProductCategory;
-
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 100 })
   name: string;
 
+  @Column({ type: 'varchar', length: 150, unique: true })
+  slug: string;
+
   @Column({ type: 'varchar', length: 100 })
+  email: string;
+
+  @Column({ type: 'varchar', length: 25 })
+  phone: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  image: string;
+
+  @Column({ type: 'text' })
   desc: string;
 
   @Column({
@@ -60,6 +62,9 @@ export class ProductSubCategory {
   })
   updated_at: Date | string;
 
-  @OneToMany(() => Products, (product) => product.sub_category)
+  @OneToMany(() => MasterExhibitions, (exhibition) => exhibition.artist)
+  exhibitions: MasterExhibitions[];
+
+  @OneToMany(() => Products, (product) => product.artist)
   product: Products[];
 }

@@ -3,35 +3,44 @@ import {
   CreateDateColumn,
   Entity,
   Index,
-  OneToMany,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Products } from './products.entity';
+import { MasterArtists } from './master_artists.entity';
 
-@Entity({ name: 'product_artists' })
-export class ProductArtists {
+@Entity({ name: 'master_exhibitions' })
+export class MasterExhibitions {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  artist_id: number;
+
+  @ManyToOne(() => MasterArtists, (artist) => artist.exhibitions)
+  @JoinColumn({ name: 'artist_id', referencedColumnName: 'id' })
+  artist: MasterArtists;
+
+  @Column({ type: 'text' })
   name: string;
 
-  @Column({ type: 'varchar', length: 150, unique: true })
+  @Column({ type: 'text', unique: true })
   slug: string;
-
-  @Column({ type: 'varchar', length: 100 })
-  email: string;
-
-  @Column({ type: 'varchar', length: 25 })
-  phone: string;
 
   @Column({ type: 'varchar', length: 100 })
   image: string;
 
   @Column({ type: 'text' })
   desc: string;
+
+  @Column({ type: 'date' })
+  start_date: Date | string;
+
+  @Column({ type: 'date' })
+  end_date: Date | string;
 
   @Column({
     type: 'smallint',
@@ -60,7 +69,4 @@ export class ProductArtists {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updated_at: Date | string;
-
-  @OneToMany(() => Products, (product) => product.artist)
-  product: Products[];
 }
