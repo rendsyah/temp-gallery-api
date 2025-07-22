@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
-import { ProductAwards, ProductImages, Products } from 'src/datasources/entities';
+import { ProductImages, Products } from 'src/datasources/entities';
 import { UploadWorkerService } from 'src/workers/upload';
 
 import { ProductService } from './product.service';
@@ -20,7 +20,6 @@ describe('ProductService', () => {
 
   let productRepository: jest.Mocked<Repository<Products>>;
   let productImageRepository: jest.Mocked<Repository<ProductImages>>;
-  let productAwardRepository: jest.Mocked<Repository<ProductAwards>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -65,13 +64,6 @@ describe('ProductService', () => {
             findOne: jest.fn(),
           },
         },
-        {
-          provide: getRepositoryToken(ProductAwards),
-          useValue: {
-            findOne: jest.fn(),
-            createQueryBuilder: jest.fn(),
-          },
-        },
       ],
     }).compile();
 
@@ -84,7 +76,6 @@ describe('ProductService', () => {
 
     productRepository = module.get(getRepositoryToken(Products));
     productImageRepository = module.get(getRepositoryToken(ProductImages));
-    productAwardRepository = module.get(getRepositoryToken(ProductAwards));
   });
 
   afterEach(() => {
@@ -103,6 +94,5 @@ describe('ProductService', () => {
     void uploadWorkerService;
     void productRepository;
     void productImageRepository;
-    void productAwardRepository;
   });
 });

@@ -72,29 +72,3 @@ export const UpdateProductImageSchema = z.object({
     .optional()
     .describe('Array of image IDs. Send as JSON string in multipart: "[1,2,3]"'),
 });
-
-export const CreateProductAwardSchema = z.object({
-  product_id: z.number().min(1),
-  awards: z
-    .array(
-      z.object({
-        title: z.string().min(1).max(100),
-        desc: z.string(),
-        year: z
-          .string()
-          .length(4, { message: 'Year must be 4 digits' })
-          .regex(/^\d{4}$/, { message: 'Invalid year' }),
-      }),
-    )
-    .min(1),
-});
-
-export const UpdateProductAwardSchema = z.object({
-  id: z.number().min(1),
-  title: z.string().min(1).max(100),
-  desc: z.string(),
-  year: z
-    .string()
-    .length(4, { message: 'Year must be 4 digits' })
-    .regex(/^\d{4}$/, { message: 'Invalid year' }),
-});

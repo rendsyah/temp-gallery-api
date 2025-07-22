@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -21,15 +20,13 @@ import { multerOptions } from 'src/commons/multer';
 
 import { ProductService } from './product.service';
 import {
-  CreateProductAwardDto,
   CreateProductDto,
   DetailDto,
   ListProductDto,
-  UpdateProductAwardDto,
   UpdateProductDto,
   UpdateProductImageDto,
 } from './product.dto';
-import { DetailProductResponse, ListProductResponse, ProductAwardResponse } from './product.types';
+import { DetailProductResponse, ListProductResponse } from './product.types';
 
 @ApiTags('Product')
 @UseGuards(JwtAuthGuard)
@@ -92,39 +89,5 @@ export class ProductController {
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.productService.updateProductImage(dto, images, user);
-  }
-
-  @Get('/award/:id')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get product award' })
-  async getProductAward(@Param() dto: DetailDto): Promise<ProductAwardResponse[]> {
-    return await this.productService.getProductAward(dto);
-  }
-
-  @Post('/award')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create product award' })
-  async createProductAward(
-    @Body() dto: CreateProductAwardDto,
-    @User() user: IUser,
-  ): Promise<MutationResponse> {
-    return await this.productService.createProductAward(dto, user);
-  }
-
-  @Patch('/award')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update product award' })
-  async updateProductAward(
-    @Body() dto: UpdateProductAwardDto,
-    @User() user: IUser,
-  ): Promise<MutationResponse> {
-    return await this.productService.updateProductAward(dto, user);
-  }
-
-  @Delete('/award/:id')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete product award' })
-  async deleteProductAward(@Param() dto: DetailDto): Promise<MutationResponse> {
-    return await this.productService.deleteProductAward(dto);
   }
 }

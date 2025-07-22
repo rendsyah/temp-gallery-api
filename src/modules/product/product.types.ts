@@ -33,10 +33,3 @@ export type ListProductResponse = IPaginationResponse<{
   created_at: string;
   updated_at: string;
 }>;
-
-export type ProductAwardResponse = {
-  id: number;
-  title: string;
-  desc: string;
-  year: string;
-};
