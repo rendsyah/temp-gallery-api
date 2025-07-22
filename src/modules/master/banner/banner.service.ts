@@ -67,7 +67,7 @@ export class BannerService {
   async getBannerType(): Promise<GetBannerTypeResponse[]> {
     return Promise.resolve([
       { id: 'Home', name: 'Home' },
-      { id: 'Artists', name: 'Artist' },
+      { id: 'Artists', name: 'Artists' },
       { id: 'Artworks', name: 'Artworks' },
       { id: 'Exhibitions', name: 'Exhibitions' },
       { id: 'Contact', name: 'Contact' },
