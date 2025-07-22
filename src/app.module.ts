@@ -24,7 +24,6 @@ import { RunnerModule } from './datasources/runner';
 
 import { UploadWorkerModule } from './workers/upload';
 
-import { ArtistModule } from './modules/artist/artist.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoryModule } from './modules/category/category.module';
 import { MasterModule } from './modules/master/master.module';
@@ -73,7 +72,6 @@ import { UserModule } from './modules/user/user.module';
     RunnerModule,
     UploadWorkerModule,
 
-    ArtistModule,
     AuthModule,
     CategoryModule,
     MasterModule,
