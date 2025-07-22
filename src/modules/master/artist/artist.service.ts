@@ -5,11 +5,11 @@ import { Brackets, Repository } from 'typeorm';
 import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
-import { ProductArtists } from 'src/datasources/entities';
+import { MasterArtists } from 'src/datasources/entities';
 import { UploadWorkerService } from 'src/workers/upload';
 
 import { CreateArtistDto, DetailDto, ListArtistDto, UpdateArtistDto } from './artist.dto';
-import { ArtistOptionsResponse, DetailArtistResponse, ListArtistResponse } from './artist.types';
+import { DetailArtistResponse, ListArtistResponse, OptionsArtistResponse } from './artist.types';
 
 @Injectable()
 export class ArtistService {
@@ -18,8 +18,8 @@ export class ArtistService {
     private readonly utilsService: UtilsService,
     private readonly uploadWorkerService: UploadWorkerService,
 
-    @InjectRepository(ProductArtists)
-    private readonly ArtistRepository: Repository<ProductArtists>,
+    @InjectRepository(MasterArtists)
+    private readonly ArtistRepository: Repository<MasterArtists>,
   ) {}
 
   /**
@@ -57,16 +57,16 @@ export class ArtistService {
   }
 
   /**
-   * Handle get artist options service
+   * Handle get options artist service
    * @returns
    */
-  async getArtistOptions(): Promise<ArtistOptionsResponse[]> {
+  async getOptionsArtist(): Promise<OptionsArtistResponse[]> {
     const getArtist = await this.ArtistRepository.createQueryBuilder('artist')
       .select(['artist.id AS id', 'artist.name AS name'])
       .where('artist.status = :status', { status: 1 })
       .getRawMany();
 
-    return getArtist as ArtistOptionsResponse[];
+    return getArtist as OptionsArtistResponse[];
   }
 
   /**

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 
 import { AppLoggerService } from 'src/commons/logger';
 import { UtilsService } from 'src/commons/utils';
-import { ProductArtists } from 'src/datasources/entities';
+import { MasterArtists } from 'src/datasources/entities';
 import { UploadWorkerService } from 'src/workers/upload';
 
 import { ArtistService } from './artist.service';
@@ -16,7 +16,7 @@ describe('ArtistService', () => {
   let utilsService: jest.Mocked<UtilsService>;
   let uploadWorkerService: jest.Mocked<UploadWorkerService>;
 
-  let artistRepository: jest.Mocked<Repository<ProductArtists>>;
+  let artistRepository: jest.Mocked<Repository<MasterArtists>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,7 +43,7 @@ describe('ArtistService', () => {
           },
         },
         {
-          provide: getRepositoryToken(ProductArtists),
+          provide: getRepositoryToken(MasterArtists),
           useValue: {
             findOne: jest.fn(),
             createQueryBuilder: jest.fn(),
@@ -58,7 +58,7 @@ describe('ArtistService', () => {
     utilsService = module.get(UtilsService);
     uploadWorkerService = module.get(UploadWorkerService);
 
-    artistRepository = module.get(getRepositoryToken(ProductArtists));
+    artistRepository = module.get(getRepositoryToken(MasterArtists));
   });
 
   afterEach(() => {

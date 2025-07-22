@@ -10,7 +10,7 @@ export type DetailArtistResponse = Nullable<{
   status: number;
 }>;
 
-export type ArtistOptionsResponse = {
+export type OptionsArtistResponse = {
   id: number;
   name: string;
 };

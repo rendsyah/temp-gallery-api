@@ -20,39 +20,39 @@ import { multerOptions } from 'src/commons/multer';
 
 import { ArtistService } from './artist.service';
 import { CreateArtistDto, DetailDto, ListArtistDto, UpdateArtistDto } from './artist.dto';
-import { ArtistOptionsResponse, DetailArtistResponse, ListArtistResponse } from './artist.types';
+import { DetailArtistResponse, ListArtistResponse, OptionsArtistResponse } from './artist.types';
 
 @ApiTags('Artist')
 @UseGuards(JwtAuthGuard)
 @Controller({
-  path: 'artist',
+  path: 'master',
   version: '1',
 })
 export class ArtistController {
   constructor(private readonly artistService: ArtistService) {}
 
-  @Get('/detail/:id')
+  @Get('/artist/detail/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get detail artist' })
   async getDetailArtist(@Param() dto: DetailDto): Promise<DetailArtistResponse> {
     return await this.artistService.getDetailArtist(dto);
   }
 
-  @Get('/options')
+  @Get('/artist/options')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get artist options' })
-  async getArtistOptions(): Promise<ArtistOptionsResponse[]> {
-    return await this.artistService.getArtistOptions();
+  @ApiOperation({ summary: 'Get options artist' })
+  async getOptionsArtist(): Promise<OptionsArtistResponse[]> {
+    return await this.artistService.getOptionsArtist();
   }
 
-  @Get('/list')
+  @Get('/artist/list')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list artist' })
   async getListArtist(@Query() dto: ListArtistDto): Promise<ListArtistResponse> {
     return await this.artistService.getListArtist(dto);
   }
 
-  @Post()
+  @Post('/artist')
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create artist' })
@@ -67,7 +67,7 @@ export class ArtistController {
     return await this.artistService.createArtist(dto, image, user);
   }
 
-  @Patch()
+  @Patch('/artist')
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update artist' })
