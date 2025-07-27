@@ -70,7 +70,7 @@ export class ArticleController {
   )
   async updateArticle(
     @Body() dto: UpdateArticleDto,
-    @UploadedFile(FilePipe) image: Express.Multer.File,
+    @UploadedFile() image: Express.Multer.File,
     @User()
     user: IUser,
   ): Promise<MutationResponse> {

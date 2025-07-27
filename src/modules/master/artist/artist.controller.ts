@@ -77,7 +77,7 @@ export class ArtistController {
   )
   async updateArtist(
     @Body() dto: UpdateArtistDto,
-    @UploadedFile(FilePipe) image: Express.Multer.File,
+    @UploadedFile() image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.artistService.updateArtist(dto, image, user);

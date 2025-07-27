@@ -77,7 +77,7 @@ export class BannerController {
   )
   async updateBanner(
     @Body() dto: UpdateBannerDto,
-    @UploadedFile(FilePipe) image: Express.Multer.File,
+    @UploadedFile() image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.bannerService.updateBanner(dto, image, user);

@@ -75,7 +75,7 @@ export class ExhibitionsController {
   )
   async updateExhibition(
     @Body() dto: UpdateExhibitionDto,
-    @UploadedFile(FilePipe) image: Express.Multer.File,
+    @UploadedFile() image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.exhibitionsService.updateExhibition(dto, image, user);
