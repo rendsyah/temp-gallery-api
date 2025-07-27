@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagg
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { FilePipe } from 'src/commons/pipes';
 import { multerOptions } from 'src/commons/multer';
 
 import { BannerService } from './banner.service';
@@ -61,7 +62,7 @@ export class BannerController {
   )
   async createBanner(
     @Body() dto: CreateBannerDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.bannerService.createBanner(dto, image, user);
@@ -76,7 +77,7 @@ export class BannerController {
   )
   async updateBanner(
     @Body() dto: UpdateBannerDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.bannerService.updateBanner(dto, image, user);

@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagg
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { FilePipe } from 'src/commons/pipes';
 import { multerOptions } from 'src/commons/multer';
 
 import { ArticleService } from './article.service';
@@ -54,7 +55,7 @@ export class ArticleController {
   )
   async createArticle(
     @Body() dto: CreateArticleDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.articleService.createArticle(dto, image, user);
@@ -69,7 +70,7 @@ export class ArticleController {
   )
   async updateArticle(
     @Body() dto: UpdateArticleDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User()
     user: IUser,
   ): Promise<MutationResponse> {

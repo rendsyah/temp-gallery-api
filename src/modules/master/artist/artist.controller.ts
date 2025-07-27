@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagg
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { FilePipe } from 'src/commons/pipes';
 import { multerOptions } from 'src/commons/multer';
 
 import { ArtistService } from './artist.service';
@@ -61,7 +62,7 @@ export class ArtistController {
   )
   async createArtist(
     @Body() dto: CreateArtistDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.artistService.createArtist(dto, image, user);
@@ -76,7 +77,7 @@ export class ArtistController {
   )
   async updateArtist(
     @Body() dto: UpdateArtistDto,
-    image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.artistService.updateArtist(dto, image, user);

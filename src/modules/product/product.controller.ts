@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagg
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { FilePipe } from 'src/commons/pipes';
 import { multerOptions } from 'src/commons/multer';
 
 import { ProductService } from './product.service';
@@ -60,7 +61,7 @@ export class ProductController {
   )
   async createProduct(
     @Body() dto: CreateProductDto,
-    @UploadedFiles() images: Express.Multer.File[],
+    @UploadedFiles(FilePipe) images: Express.Multer.File[],
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.productService.createProduct(dto, images, user);
@@ -85,7 +86,7 @@ export class ProductController {
   )
   async updateProductImage(
     @Body() dto: UpdateProductImageDto,
-    @UploadedFiles() images: Express.Multer.File[],
+    @UploadedFiles(FilePipe) images: Express.Multer.File[],
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.productService.updateProductImage(dto, images, user);

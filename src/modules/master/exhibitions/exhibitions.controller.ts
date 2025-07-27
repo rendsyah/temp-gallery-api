@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagg
 import { JwtAuthGuard } from 'src/commons/guards';
 import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User } from 'src/commons/decorators';
+import { FilePipe } from 'src/commons/pipes';
 import { multerOptions } from 'src/commons/multer';
 
 import { ExhibitionsService } from './exhibitions.service';
@@ -59,7 +60,7 @@ export class ExhibitionsController {
   )
   async createExhibition(
     @Body() dto: CreateExhibitionDto,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.exhibitionsService.createExhibition(dto, image, user);
@@ -74,7 +75,7 @@ export class ExhibitionsController {
   )
   async updateExhibition(
     @Body() dto: UpdateExhibitionDto,
-    image: Express.Multer.File,
+    @UploadedFile(FilePipe) image: Express.Multer.File,
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.exhibitionsService.updateExhibition(dto, image, user);
