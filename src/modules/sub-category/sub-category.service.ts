@@ -154,6 +154,7 @@ export class SubCategoryService {
     const getSubCategory = await this.SubCategoryRepository.createQueryBuilder('sub_category')
       .select(['sub_category.id AS id'])
       .where('LOWER(sub_category.name) = LOWER(:name)', { name: dto.name })
+      .andWhere('sub_category.category_id = :category_id', { category_id: dto.category_id })
       .getRawOne();
 
     if (getSubCategory) {
@@ -187,21 +188,25 @@ export class SubCategoryService {
       where: {
         id: dto.id,
       },
-      select: ['id', 'name'],
+      select: ['id', 'category_id', 'name'],
     });
 
     if (!getSubCategory) {
       throw new NotFoundException('Sub Category not found');
     }
 
-    if (getSubCategory.name.toLowerCase() !== dto.name.toLowerCase()) {
+    if (
+      getSubCategory.category_id !== dto.category_id ||
+      getSubCategory.name.toLowerCase() !== dto.name.toLowerCase()
+    ) {
       const checkCategory = await this.SubCategoryRepository.createQueryBuilder('sub_category')
         .select(['sub_category.id AS id'])
         .where('LOWER(sub_category.name) = LOWER(:name)', { name: dto.name })
+        .andWhere('sub_category.category_id = :category_id', { category_id: dto.category_id })
         .getRawOne();
 
       if (checkCategory) {
-        throw new BadRequestException('Name already exists');
+        throw new BadRequestException('Sub Category already exists');
       }
     }
 
