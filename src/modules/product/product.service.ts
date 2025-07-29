@@ -280,20 +280,22 @@ export class ProductService {
       where: {
         id: dto.id,
       },
-      select: ['id', 'name'],
+      select: ['id', 'name', 'sku'],
     });
 
     if (!getProduct) {
       throw new NotFoundException('Product not found');
     }
 
-    const getProductSku = await this.ProductRepository.createQueryBuilder('product')
-      .select(['product.id AS id'])
-      .where('LOWER(product.sku) = LOWER(:sku)', { sku: dto.sku })
-      .getRawOne();
+    if (getProduct.sku.toLowerCase() !== dto.sku.toLowerCase()) {
+      const checkProductSku = await this.ProductRepository.createQueryBuilder('product')
+        .select(['product.id AS id'])
+        .where('LOWER(product.sku) = LOWER(:sku)', { sku: dto.sku })
+        .getRawOne();
 
-    if (getProductSku) {
-      throw new BadRequestException('SKU already exists');
+      if (checkProductSku) {
+        throw new BadRequestException('SKU already exists');
+      }
     }
 
     if (getProduct.name.toLowerCase() !== dto.name.toLowerCase()) {
