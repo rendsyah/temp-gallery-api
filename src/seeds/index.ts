@@ -1,12 +1,12 @@
 import AppDataSource from '../datasources/data-source';
 
-import { seedInit } from './init.seed';
+import { initSeed } from './init';
 
 const runSeed = async () => {
   const dataSource = await AppDataSource.initialize();
 
   try {
-    await seedInit(dataSource);
+    await initSeed(dataSource);
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : String(error));
   } finally {

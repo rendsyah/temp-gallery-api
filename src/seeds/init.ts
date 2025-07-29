@@ -12,9 +12,9 @@ import {
   UserPermissions,
 } from '../datasources/entities';
 
-import { MENUS } from './mock.seed';
+import { MENUS } from './mock';
 
-export const seedInit = async (dataSource: DataSource) => {
+export const initSeed = async (dataSource: DataSource) => {
   const accessRepository = dataSource.getRepository(UserAccess);
   const userRepository = dataSource.getRepository(User);
 
@@ -36,7 +36,7 @@ export const seedInit = async (dataSource: DataSource) => {
 
       const accessResult = await manager.getRepository(UserAccess).insert({
         name: 'Superuser',
-        desc: 'Superuser Access',
+        desc: 'Gallery Superuser',
         is_show: 0,
       });
 
