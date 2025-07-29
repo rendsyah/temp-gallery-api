@@ -12,6 +12,7 @@ export type DetailProductResponse = Nullable<{
   category_id: number;
   sub_category_id: number;
   name: string;
+  sku: string;
   year: string;
   images: ProductImagesResponse[];
   width: number;
