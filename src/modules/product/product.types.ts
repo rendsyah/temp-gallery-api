@@ -1,6 +1,6 @@
 import { IPaginationResponse, Nullable } from 'src/commons/utils/utils.types';
 
-type ProductImagesResponse = {
+type ProductImages = {
   id: number;
   image: string;
 };
@@ -14,7 +14,7 @@ export type DetailProductResponse = Nullable<{
   name: string;
   sku: string;
   year: string;
-  images: ProductImagesResponse[];
+  images: ProductImages[];
   width: number;
   length: number;
   unit: string;
@@ -22,6 +22,11 @@ export type DetailProductResponse = Nullable<{
   desc: string;
   status: number;
 }>;
+
+export type OptionsProductResponse = {
+  id: number;
+  name: string;
+};
 
 export type ListProductResponse = IPaginationResponse<{
   id: number;

@@ -27,7 +27,11 @@ import {
   UpdateProductDto,
   UpdateProductImageDto,
 } from './product.dto';
-import { DetailProductResponse, ListProductResponse } from './product.types';
+import {
+  DetailProductResponse,
+  ListProductResponse,
+  OptionsProductResponse,
+} from './product.types';
 
 @ApiTags('Product')
 @UseGuards(JwtAuthGuard)
@@ -43,6 +47,13 @@ export class ProductController {
   @ApiOperation({ summary: 'Get detail product' })
   async getDetailProduct(@Param() dto: DetailDto): Promise<DetailProductResponse> {
     return await this.productService.getDetailProduct(dto);
+  }
+
+  @Get('/options')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get options product' })
+  async getOptionsProduct(): Promise<OptionsProductResponse[]> {
+    return await this.productService.getOptionsProduct();
   }
 
   @Get('/list')

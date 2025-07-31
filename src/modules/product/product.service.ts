@@ -16,7 +16,11 @@ import {
   UpdateProductDto,
   UpdateProductImageDto,
 } from './product.dto';
-import { DetailProductResponse, ListProductResponse } from './product.types';
+import {
+  DetailProductResponse,
+  ListProductResponse,
+  OptionsProductResponse,
+} from './product.types';
 
 @Injectable()
 export class ProductService {
@@ -85,6 +89,19 @@ export class ProductService {
         image: product.image,
       })),
     };
+  }
+
+  /**
+   * Handle get options product service
+   * @returns
+   */
+  async getOptionsProduct(): Promise<OptionsProductResponse[]> {
+    const getProduct = await this.ProductRepository.createQueryBuilder('product')
+      .select(['product.id AS id', 'product.name AS name'])
+      .where('product.status = :status', { status: 1 })
+      .getRawMany();
+
+    return getProduct as OptionsProductResponse[];
   }
 
   /**
