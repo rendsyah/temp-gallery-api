@@ -43,7 +43,7 @@ export class ProductService {
    */
   async getDetailProduct(dto: DetailDto): Promise<DetailProductResponse> {
     const getProduct = await this.ProductRepository.createQueryBuilder('product')
-      .innerJoin('product.product_images', 'product_images')
+      .leftJoin('product.product_images', 'product_images')
       .select([
         'product.id AS id',
         'product.artist_id AS artist_id',
@@ -84,10 +84,12 @@ export class ProductService {
       price: getProduct[0].price,
       desc: getProduct[0].desc,
       status: getProduct[0].status,
-      images: getProduct.map((product) => ({
-        id: product.image_id,
-        image: product.image,
-      })),
+      images: getProduct
+        .filter((product) => product.image_id)
+        .map((product) => ({
+          id: product.image_id,
+          image: product.image,
+        })),
     };
   }
 
