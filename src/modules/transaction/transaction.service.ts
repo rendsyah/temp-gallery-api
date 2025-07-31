@@ -187,10 +187,11 @@ export class TransactionService {
    */
   async createTransaction(dto: CreateTransactionDto, user: IUser): Promise<MutationResponse> {
     await this.runnerService.runTransaction(async (queryRunner: QueryRunner) => {
-      let subTotal = 0;
-      const shippingFee = 0;
-
       const transactionItems: Partial<TransactionItems>[] = [];
+      const transactionCalc = {
+        sub_total: 0,
+        shipping_fee: 0,
+      };
 
       for (const item of dto.items) {
         const getProduct = await this.productService.getDetailProduct({ id: item.product_id });
@@ -203,7 +204,7 @@ export class TransactionService {
         const qty = item.quantity;
         const totalPrice = qty * price;
 
-        subTotal += totalPrice;
+        transactionCalc.sub_total += totalPrice;
 
         transactionItems.push({
           product_id: item.product_id,
@@ -214,7 +215,7 @@ export class TransactionService {
         });
       }
 
-      const grandTotal = subTotal + shippingFee;
+      const grandTotal = transactionCalc.sub_total + transactionCalc.shipping_fee;
 
       const formatName = this.utilsService.validateUpperCase(dto.name);
 
@@ -223,8 +224,8 @@ export class TransactionService {
         email: dto.email,
         phone: dto.phone,
         message: dto.message,
-        sub_total: subTotal,
-        shipping_fee: shippingFee,
+        sub_total: transactionCalc.sub_total,
+        shipping_fee: transactionCalc.shipping_fee,
         grand_total: grandTotal,
         created_by: user.id,
       });
