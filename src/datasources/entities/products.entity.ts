@@ -63,8 +63,8 @@ export class Products {
   @Column({ type: 'varchar', length: 100, unique: true })
   sku: string;
 
-  @Column({ type: 'char', length: 4 })
-  year: string;
+  @Column({ type: 'int' })
+  year: number;
 
   @Column({ type: 'numeric', precision: 10, scale: 0 })
   width: number;
