@@ -97,7 +97,7 @@ export class ProductController {
   )
   async updateProductImage(
     @Body() dto: UpdateProductImageDto,
-    @UploadedFiles(FilesPipe) images: Express.Multer.File[],
+    @UploadedFiles() images: Express.Multer.File[],
     @User() user: IUser,
   ): Promise<MutationResponse> {
     return await this.productService.updateProductImage(dto, images, user);

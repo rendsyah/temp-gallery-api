@@ -407,12 +407,14 @@ export class ProductService {
       }
     }
 
-    const updateValues: string[] = [];
     const insertValues: Array<{
       product_id: number;
       image: string;
       created_by: number;
     }> = [];
+    const updateValues: string[] = [];
+    const deleteValues: number[] = [];
+
     const uploadQueue: Array<{
       context: string;
       buffer: Buffer;
@@ -421,32 +423,49 @@ export class ProductService {
       dest: string;
     }> = [];
 
-    images.forEach((img, idx) => {
-      const meta = this.utilsService.validateFile(img, {
-        dest: '/product',
-        type: 'image',
-      });
-
-      uploadQueue.push({
-        context: 'product',
-        buffer: img.buffer,
-        original_name: img.originalname,
-        filename: meta.fullpath,
-        dest: meta.filepath,
-      });
-
-      if (dto.image_ids && idx < dto.image_ids.length) {
-        updateValues.push(`(${dto.image_ids[idx]}, '${meta.fullpath}', ${user.id})`);
-      } else {
-        insertValues.push({
-          product_id: dto.product_id,
-          image: meta.fullpath,
-          created_by: user.id,
-        });
+    if (dto.image_ids && images.length === 0) {
+      for (const id of dto.image_ids) {
+        deleteValues.push(id);
       }
-    });
+    }
+
+    if (dto.image_ids && images.length > 0) {
+      images.forEach((img, idx) => {
+        const meta = this.utilsService.validateFile(img, {
+          dest: '/product',
+          type: 'image',
+        });
+
+        uploadQueue.push({
+          context: 'product',
+          buffer: img.buffer,
+          original_name: img.originalname,
+          filename: meta.fullpath,
+          dest: meta.filepath,
+        });
+
+        if (dto.image_ids && idx < dto.image_ids.length) {
+          updateValues.push(`(${dto.image_ids[idx]}, '${meta.fullpath}', ${user.id})`);
+        } else {
+          insertValues.push({
+            product_id: dto.product_id,
+            image: meta.fullpath,
+            created_by: user.id,
+          });
+        }
+      });
+    }
 
     await this.runnerService.runTransaction(async (queryRunner) => {
+      if (insertValues.length > 0) {
+        await queryRunner.manager
+          .createQueryBuilder(ProductImages, 'product_images')
+          .insert()
+          .into(ProductImages)
+          .values(insertValues)
+          .execute();
+      }
+
       if (updateValues.length > 0) {
         const query = `
           WITH data (id, image, updated_by) AS (
@@ -461,12 +480,11 @@ export class ProductService {
         await queryRunner.query(query);
       }
 
-      if (insertValues.length > 0) {
+      if (deleteValues.length > 0) {
         await queryRunner.manager
           .createQueryBuilder(ProductImages, 'product_images')
-          .insert()
-          .into(ProductImages)
-          .values(insertValues)
+          .delete()
+          .where('id IN (:...ids)', { ids: deleteValues })
           .execute();
       }
     });

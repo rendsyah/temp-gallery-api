@@ -38,7 +38,8 @@ export const CreateProductSchema = z.object({
   year: z
     .string()
     .length(4, { message: 'Year must be 4 digits' })
-    .regex(/^\d{4}$/, { message: 'Invalid year' }),
+    .regex(/^\d{4}$/, { message: 'Invalid year' })
+    .transform(Number),
   width: z.preprocess((value) => Number(value), z.number().min(1)),
   length: z.preprocess((value) => Number(value), z.number().min(1)),
   unit: z.enum(['cm']),
