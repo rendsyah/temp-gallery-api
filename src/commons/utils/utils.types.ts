@@ -55,12 +55,19 @@ export type IUser = {
   exp: number;
 };
 
+export type IActions = {
+  privilege_id: number;
+  action: string;
+};
+
 export type IMenu = {
   id: number;
   name: string;
   path: string;
   icon: string;
   level: number;
+  is_group: number;
+  actions?: IActions[];
   child: IMenu[];
 };
 
