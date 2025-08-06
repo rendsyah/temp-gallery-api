@@ -456,14 +456,19 @@ export class ProductService {
       });
     }
 
+    let result = {};
+
     await this.runnerService.runTransaction(async (queryRunner) => {
       if (insertValues.length > 0) {
-        await queryRunner.manager
+        const insertResult = await queryRunner.manager
           .createQueryBuilder(ProductImages, 'product_images')
           .insert()
           .into(ProductImages)
           .values(insertValues)
+          .returning('*')
           .execute();
+
+        result = insertResult.raw;
       }
 
       if (updateValues.length > 0) {
@@ -476,16 +481,22 @@ export class ProductService {
               updated_by = data.updated_by
           FROM data
           WHERE pi.id = data.id
+          RETURNING *
         `;
-        await queryRunner.query(query);
+
+        const [updateResult] = await queryRunner.query(query);
+        result = updateResult;
       }
 
       if (deleteValues.length > 0) {
-        await queryRunner.manager
+        const deleteResult = await queryRunner.manager
           .createQueryBuilder(ProductImages, 'product_images')
           .delete()
           .where('id IN (:...ids)', { ids: deleteValues })
+          .returning('*')
           .execute();
+
+        result = deleteResult.raw;
       }
     });
 
@@ -501,6 +512,7 @@ export class ProductService {
     return {
       success: true,
       message: 'Successfully updated',
+      data: result,
     };
   }
 }
