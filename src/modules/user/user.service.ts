@@ -361,7 +361,7 @@ export class UserService {
         created_by: user.id,
       });
 
-      const insertUserPermissions = dto.privileges.map((item) => {
+      const insertUserPermissions = dto.actions.map((item) => {
         return {
           access_id: +accessResult.generatedMaps[0].id,
           privilege_id: item.privilege_id,
@@ -431,7 +431,7 @@ export class UserService {
         access_id: dto.id,
       });
 
-      const insertUserPermissions = dto.privileges.map((item) => {
+      const insertUserPermissions = dto.actions.map((item) => {
         return {
           access_id: dto.id,
           privilege_id: item.privilege_id,

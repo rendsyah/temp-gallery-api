@@ -72,7 +72,7 @@ export const ListAccessSchema = z.object({
 export const CreateAccessSchema = z.object({
   name: z.string().min(3),
   desc: z.string(),
-  privileges: z
+  actions: z
     .array(
       z.object({
         privilege_id: z.number().min(1),
