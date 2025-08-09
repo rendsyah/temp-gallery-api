@@ -184,7 +184,7 @@ describe('UserService', () => {
     const mockDto = {
       name: 'Administrator',
       desc: 'Administrator Access',
-      privileges: [
+      actions: [
         {
           privilege_id: 1,
         },
@@ -269,7 +269,7 @@ describe('UserService', () => {
       id: 1,
       name: 'Administrator',
       desc: 'Administrator Access',
-      privileges: [
+      actions: [
         {
           privilege_id: 1,
         },
