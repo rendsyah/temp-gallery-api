@@ -1,4 +1,4 @@
-import { IPaginationResponse, Nullable } from 'src/commons/utils/utils.types';
+import { IMenu, IPaginationResponse, Nullable } from 'src/commons/utils/utils.types';
 
 export type UserResponse = Nullable<{
   id: number;
@@ -30,6 +30,14 @@ export type ListUserResponse = IPaginationResponse<{
   status_text: string;
   created_at: string;
   updated_at: string;
+}>;
+
+export type DetailAccessResponse = Nullable<{
+  id: number;
+  name: string;
+  desc: string;
+  status: number;
+  menu: IMenu[];
 }>;
 
 export type ListAccessResponse = IPaginationResponse<{

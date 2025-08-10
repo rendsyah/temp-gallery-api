@@ -21,6 +21,7 @@ import {
   DetailUserResponse,
   ListAccessResponse,
   OptionsAccessResponse,
+  DetailAccessResponse,
 } from './user.types';
 
 @ApiTags('User')
@@ -65,6 +66,13 @@ export class UserController {
   @ApiOperation({ summary: 'Update user' })
   async updateUser(@Body() dto: UpdateUserDto, @User() user: IUser): Promise<MutationResponse> {
     return await this.userService.updateUser(dto, user);
+  }
+
+  @Get('/access/detail/:id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get detail access' })
+  async getDetailAccess(@Param() dto: DetailDto): Promise<DetailAccessResponse> {
+    return await this.userService.getDetailAccess(dto);
   }
 
   @Get('/access/options')

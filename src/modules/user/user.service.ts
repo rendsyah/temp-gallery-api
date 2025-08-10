@@ -4,7 +4,7 @@ import { QueryRunner, Repository } from 'typeorm';
 
 import { UtilsService } from 'src/commons/utils';
 import { RunnerService } from 'src/datasources/runner';
-import { IUser, MutationResponse } from 'src/commons/utils/utils.types';
+import { IMenu, IUser, MutationResponse } from 'src/commons/utils/utils.types';
 import { User, UserAccess, UserPermissions } from 'src/datasources/entities';
 
 import {
@@ -17,6 +17,7 @@ import {
   UpdateUserDto,
 } from './user.dto';
 import {
+  DetailAccessResponse,
   DetailUserResponse,
   ListAccessResponse,
   ListUserResponse,
@@ -252,6 +253,100 @@ export class UserService {
       success: true,
       message: 'Successfully updated',
     };
+  }
+
+  /**
+   * Handle get detail access service
+   * @param dto
+   * @returns
+   */
+  async getDetailAccess(dto: DetailDto): Promise<DetailAccessResponse> {
+    const getAccess = await this.UserAccessRepository.createQueryBuilder('access')
+      .innerJoin('access.user_permissions', 'user_permissions')
+      .innerJoin('user_permissions.privilege', 'privilege')
+      .innerJoin('privilege.menu', 'menu')
+      .select([
+        'access.id AS id',
+        'access.name AS name',
+        'access.desc AS desc',
+        'access.status AS status',
+        'menu.id AS menu_id',
+        'menu.name AS menu_name',
+        'menu.path AS menu_path',
+        'menu.icon AS menu_icon',
+        'menu.level AS menu_level',
+        'menu.parent_id AS parent_id',
+        'menu.is_group AS is_group',
+        'menu.sort AS sort',
+        'privilege.id AS privilege_id',
+        'privilege.action AS action',
+      ])
+      .where('access.id = :id', { id: dto.id })
+      .orderBy('menu.parent_id', 'ASC')
+      .addOrderBy('menu.sort', 'ASC')
+      .addOrderBy('privilege.id', 'ASC')
+      .getRawMany();
+
+    if (getAccess.length === 0) {
+      throw new NotFoundException('Access not found');
+    }
+
+    const result = {
+      id: getAccess[0].id,
+      name: getAccess[0].name,
+      desc: getAccess[0].desc,
+      status: getAccess[0].status,
+      menu: [] as IMenu[],
+    };
+
+    const resultMap = new Map<number, IMenu>();
+
+    for (const access of getAccess) {
+      if (!resultMap.has(access.menu_id)) {
+        resultMap.set(access.menu_id, {
+          id: access.menu_id,
+          name: access.menu_name,
+          path: access.menu_path,
+          icon: access.menu_icon,
+          level: access.menu_level,
+          is_group: access.is_group,
+          actions: [],
+          child: [],
+        });
+      }
+
+      const currentMenu = resultMap.get(access.menu_id)!;
+      currentMenu.actions?.push({
+        privilege_id: access.privilege_id,
+        action: access.action,
+      });
+
+      if (access.parent_id === 0) {
+        if (!result.menu.includes(currentMenu)) {
+          result.menu.push(currentMenu);
+        }
+      } else {
+        if (!resultMap.has(access.parent_id)) {
+          resultMap.set(access.parent_id, {
+            id: access.parent_id,
+            name: '',
+            path: '',
+            icon: '',
+            level: 0,
+            is_group: 1,
+            actions: [],
+            child: [],
+          });
+        }
+
+        const parentMenu = resultMap.get(access.parent_id)!;
+        if (!parentMenu.child.includes(currentMenu)) {
+          parentMenu.child.push(currentMenu);
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
