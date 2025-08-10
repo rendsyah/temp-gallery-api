@@ -31,7 +31,6 @@ export class MenuService {
         'menu.is_group AS is_group',
         'menu.sort AS sort',
         'privilege.id AS privilege_id',
-        'privilege.menu_id AS menu_id',
         'privilege.action AS action',
       ])
       .orderBy('menu.parent_id', 'ASC')
