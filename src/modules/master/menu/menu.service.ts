@@ -2,20 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { IMenu } from 'src/commons/utils/utils.types';
+import { UtilsService } from 'src/commons/utils';
+import { IMenu, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterMenu } from 'src/datasources/entities';
 
 import { MenuResponse } from './menu.types';
+import { UpdateMenuDto } from './menu.dto';
 
 @Injectable()
 export class MenuService {
   constructor(
+    private readonly utilsService: UtilsService,
+
     @InjectRepository(MasterMenu)
     private readonly MenuRepository: Repository<MasterMenu>,
   ) {}
 
   /**
-   * Handle get menu
+   * Handle get menu service
    * @returns
    */
   async getMenu(): Promise<MenuResponse> {
@@ -87,5 +91,28 @@ export class MenuService {
     }
 
     return result;
+  }
+
+  /**
+   * Handle update menu service
+   * @param dto
+   * @returns
+   */
+  async updateMenu(dto: UpdateMenuDto): Promise<MutationResponse> {
+    const formatName = this.utilsService.validateUpperCase(dto.name);
+
+    await this.MenuRepository.update(
+      { id: dto.id },
+      {
+        name: formatName,
+        sort: dto.sort,
+        status: dto.status,
+      },
+    );
+
+    return {
+      success: true,
+      message: 'Successfully updated',
+    };
   }
 }

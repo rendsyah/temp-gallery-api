@@ -1,9 +1,11 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/commons/guards';
+import { MutationResponse } from 'src/commons/utils/utils.types';
 
 import { MenuService } from './menu.service';
+import { UpdateMenuDto } from './menu.dto';
 import { MenuResponse } from './menu.types';
 
 @ApiTags('Menu')
@@ -20,5 +22,12 @@ export class MenuController {
   @ApiOperation({ summary: 'Get menu' })
   async getMenu(): Promise<MenuResponse> {
     return await this.menuService.getMenu();
+  }
+
+  @Patch('/menu')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update menu' })
+  async updateMenu(@Body() dto: UpdateMenuDto): Promise<MutationResponse> {
+    return await this.menuService.updateMenu(dto);
   }
 }

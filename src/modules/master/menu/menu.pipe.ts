@@ -1,0 +1,8 @@
+import { z } from 'zod';
+
+export const UpdateMenuSchema = z.object({
+  id: z.number().min(1),
+  name: z.string().min(1),
+  sort: z.number().min(1),
+  status: z.number().min(0).max(1),
+});
