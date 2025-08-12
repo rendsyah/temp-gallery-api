@@ -1,4 +1,6 @@
 import { createZodCustomDto } from 'src/commons/zod';
-import { UpdateMenuSchema } from './menu.pipe';
+import { DetailSchema, UpdateMenuSchema } from './menu.pipe';
+
+export class DetailDto extends createZodCustomDto(DetailSchema) {}
 
 export class UpdateMenuDto extends createZodCustomDto(UpdateMenuSchema) {}

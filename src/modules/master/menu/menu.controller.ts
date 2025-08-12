@@ -5,8 +5,8 @@ import { JwtAuthGuard } from 'src/commons/guards';
 import { MutationResponse } from 'src/commons/utils/utils.types';
 
 import { MenuService } from './menu.service';
-import { UpdateMenuDto } from './menu.dto';
-import { MenuResponse } from './menu.types';
+import { DetailDto, UpdateMenuDto } from './menu.dto';
+import { DetailMenuResponse, MenuResponse } from './menu.types';
 
 @ApiTags('Menu')
 @UseGuards(JwtAuthGuard)
@@ -16,6 +16,13 @@ import { MenuResponse } from './menu.types';
 })
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
+
+  @Get('/detail/:id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get detail menu' })
+  async getDetailMenu(@Body() dto: DetailDto): Promise<DetailMenuResponse> {
+    return await this.menuService.getDetailMenu(dto);
+  }
 
   @Get('/menu')
   @ApiBearerAuth()

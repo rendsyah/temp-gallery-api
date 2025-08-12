@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -6,8 +6,8 @@ import { UtilsService } from 'src/commons/utils';
 import { IMenu, MutationResponse } from 'src/commons/utils/utils.types';
 import { MasterMenu } from 'src/datasources/entities';
 
-import { MenuResponse } from './menu.types';
-import { UpdateMenuDto } from './menu.dto';
+import { DetailDto, UpdateMenuDto } from './menu.dto';
+import { DetailMenuResponse, MenuResponse } from './menu.types';
 
 @Injectable()
 export class MenuService {
@@ -17,6 +17,29 @@ export class MenuService {
     @InjectRepository(MasterMenu)
     private readonly MenuRepository: Repository<MasterMenu>,
   ) {}
+
+  /**
+   * Handle get detail menu service
+   * @param dto
+   * @returns
+   */
+  async getDetailMenu(dto: DetailDto): Promise<DetailMenuResponse> {
+    const getMenu = await this.MenuRepository.createQueryBuilder('menu')
+      .select(['menu.id AS id', 'menu.name AS name', 'menu.sort AS sort', 'menu.status AS status'])
+      .where('menu.id = :id', { id: dto.id })
+      .getRawOne();
+
+    if (!getMenu) {
+      throw new NotFoundException('Menu not found');
+    }
+
+    return {
+      id: getMenu.id,
+      name: getMenu.name,
+      sort: getMenu.sort,
+      status: getMenu.status,
+    };
+  }
 
   /**
    * Handle get menu service
